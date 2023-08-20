@@ -134,7 +134,7 @@ func (c *CalendarMarkup) addEmptyButtons(emptyButtons int) (emptyInlineButtons [
 
 func rowButtons(buttons []string) (buttonLine []echotron.InlineKeyboardButton) {
 	for _, button := range buttons {
-		buttonLine = append(buttonLine, add_button(button, "nil")[0])
+		buttonLine = append(buttonLine, add_button(button, "nil")...)
 	}
 	return
 }

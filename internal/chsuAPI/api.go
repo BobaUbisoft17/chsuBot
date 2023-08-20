@@ -48,12 +48,12 @@ func (a *API) tokenIsValid() (bool, error) {
 }
 
 func (a *API) updateToken() error {
-	bytesDate, err := json.Marshal(a.Data)
+	bytesData, err := json.Marshal(a.Data)
 	if err != nil {
 		return err
 	}
 
-	resp, err := http.Post(URL+"/auth/signin", "application/json", bytes.NewBuffer(bytesDate))
+	resp, err := http.Post(URL+"/auth/signin", "application/json", bytes.NewBuffer(bytesData))
 	if err != nil {
 		return err
 	}
@@ -108,8 +108,8 @@ func (a *API) GroupsId() ([]GroupIds, error) {
 }
 
 func (a *API) One(startDate, endDate string, groupId int) ([]schedule.Lecture, error) {
-	request_budy := fmt.Sprintf("timetable/v1/from/%v/to/%v/groupId/%v/", startDate, endDate, groupId)
-	request, err := http.NewRequest(http.MethodGet, URL+request_budy, nil)
+	requestBody := fmt.Sprintf("timetable/v1/from/%v/to/%v/groupId/%v/", startDate, endDate, groupId)
+	request, err := http.NewRequest(http.MethodGet, URL+requestBody, nil)
 	if err != nil {
 		return []schedule.Lecture{}, err
 	}
@@ -141,8 +141,8 @@ func (a *API) One(startDate, endDate string, groupId int) ([]schedule.Lecture, e
 func (a *API) All() ([]schedule.Lecture, error) {
 	from := time.Now().Format("02.01.2006")
 	to := time.Now().Add(24 * time.Hour).Format("02.01.2006")
-	request_body := fmt.Sprintf("timetable/v1/event/from/%s/to/%s/", from, to)
-	request, err := http.NewRequest(http.MethodGet, URL+request_body, nil)
+	requestBody := fmt.Sprintf("timetable/v1/event/from/%s/to/%s/", from, to)
+	request, err := http.NewRequest(http.MethodGet, URL+requestBody, nil)
 	request.Header.Add("Authorization", fmt.Sprintf("Bearer %s", a.Token))
 	if err != nil {
 		return []schedule.Lecture{}, err

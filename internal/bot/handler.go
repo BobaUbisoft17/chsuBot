@@ -1,6 +1,7 @@
 package bot
 
 import (
+	"fmt"
 	"strings"
 	"time"
 
@@ -51,7 +52,14 @@ func (b *bot) HandleMessage(update *echotron.Update) stateFn {
 
 func (b *bot) sendWelcome() {
 	replyMarkup := kb.GreetingKeyboard()
-	b.answer("Hello world!", replyMarkup)
+	res, _ := b.GetChat(b.chatID)
+	b.answer(
+		fmt.Sprintf(
+			"Здравствуйте, %s!!!\nЯ бот, упрощающий получение расписания занятий ЧГУ",
+			res.Result.FirstName,
+		),
+		replyMarkup,
+	)
 }
 
 func (b *bot) chooseDate() {
