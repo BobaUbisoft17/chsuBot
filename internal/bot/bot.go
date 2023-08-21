@@ -14,20 +14,20 @@ type storage interface {
 	ChangeUserGroup(userID int64, groupName string)
 	DeleteGroup(userID int64)
 	GetGroupNames() []string
-	GetUserGroup(userID int64) int
 	GetTodaySchedule(groupID int) string
 	GetTomorrowSchedule(groupID int) string
-	GroupNameIsCorrect(groupName string) bool
+	GetUserGroup(userID int64) int
 	GroupId(string) int
+	GroupNameIsCorrect(groupName string) bool
 	IsUserHasGroup(userID int64) bool
 	IsUserInDB(userID int64) bool
 }
 
 type logger interface {
-	Info(args ...interface{})
-	Infof(format string, args ...interface{})
 	Error(args ...interface{})
 	Errorf(format string, args ...interface{})
+	Info(args ...interface{})
+	Infof(format string, args ...interface{})
 }
 
 type stateFn func(*echotron.Update) stateFn
