@@ -3,6 +3,7 @@ package chsuapi
 import (
 	"bytes"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"net/http"
@@ -14,6 +15,8 @@ import (
 )
 
 const URL = "http://api.chsu.ru/api/"
+
+var ErrInvalidToken = errors.New("Invalid token")
 
 func New(data map[string]string, logger logger) *API {
 	return &API{
@@ -138,7 +141,21 @@ func (a *API) One(startDate, endDate string, groupId int) ([]schedule.Lecture, e
 	return lessons, nil
 }
 
-func (a *API) All() ([]schedule.Lecture, error) {
+func (api *API) All() ([]schedule.Lecture, error) {
+	for {
+		schedules, err := api.requestAll()
+		if errors.Is(err, ErrInvalidToken) {
+			if err = api.updateToken(); err != nil {
+				return nil, err
+			} else {
+				continue
+			}
+		}
+		return schedules, err
+	}
+}
+
+func (a *API) requestAll() ([]schedule.Lecture, error) {
 	from := time.Now().Format("02.01.2006")
 	to := time.Now().Add(24 * time.Hour).Format("02.01.2006")
 	requestBody := fmt.Sprintf("timetable/v1/event/from/%s/to/%s/", from, to)
@@ -160,10 +177,7 @@ func (a *API) All() ([]schedule.Lecture, error) {
 	sliceLectures, err := readJson[[]schedule.Lecture](body)
 	if err != nil {
 		if strings.Contains(err.Error(), "invalid character") {
-			if err = a.updateToken(); err != nil {
-				return []schedule.Lecture{}, err
-			}
-			return a.All()
+			return nil, ErrInvalidToken
 		} else {
 			return []schedule.Lecture{}, err
 		}
