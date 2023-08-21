@@ -37,18 +37,18 @@ func NewReloader(api chsuAPI, db groupStorage, logger logger) *Reloader {
 	}
 }
 
-func (r *Reloader) ParseSchedule(waitTime int) {
-	time.Sleep(time.Duration(waitTime) * time.Second)
-	r.logger.Info("Начался процесс обновления расписания")
+func (r *Reloader) ReloadSchedule(waitingTimeSeconds int) {
+	time.Sleep(time.Duration(waitingTimeSeconds) * time.Second)
+	r.logger.Info("Schedule update process started")
 	var wg sync.WaitGroup
 	unSortedSchedule, err := r.api.All()
 	if err != nil {
-		r.logger.Errorf("При запросе на получение расписания произошла ошибка: %s", err)
+		r.logger.Errorf("%w", err)
 		return
 	}
 	sortedScheduleByIDs, err := collectLecture(unSortedSchedule)
 	if err != nil {
-		r.logger.Errorf("Ошибка перевода даты в timestamp:%s", err)
+		r.logger.Errorf("%w", err)
 	}
 	for key := range sortedScheduleByIDs {
 		wg.Add(1)
@@ -61,7 +61,7 @@ func (r *Reloader) ParseSchedule(waitTime int) {
 	}
 	wg.Wait()
 	r.addScheduleMissingGroups(GetKeys(sortedScheduleByIDs))
-	r.logger.Info("Расписание успешно обновлено")
+	r.logger.Info("Schedule updated succesfully")
 }
 
 func (r *Reloader) addScheduleMissingGroups(keys []int) {
@@ -77,11 +77,12 @@ func (r *Reloader) addScheduleMissingGroups(keys []int) {
 	wg.Wait()
 }
 
-func (r *Reloader) UpdateSchedule() {
+func (r *Reloader) Start() {
 	for {
 		nowTime := time.Now()
-
-		waitingTime := ((nowTime.Hour()/6+1)*6*60 + 1 - (nowTime.Hour()*60 + nowTime.Minute())) * 60
-		r.ParseSchedule(waitingTime)
+		nextUpdateTimeMinutes := (nowTime.Hour()/6+1)*6*60 + 1
+		nowTimeMinutes := nowTime.Hour()*60 + nowTime.Minute()
+		waitingTimeSeconds := (nextUpdateTimeMinutes - nowTimeMinutes) * 60
+		r.ReloadSchedule(waitingTimeSeconds)
 	}
 }

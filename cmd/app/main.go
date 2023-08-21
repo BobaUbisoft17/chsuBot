@@ -39,7 +39,7 @@ func main() {
 		db,
 		logger,
 	)
-	rel.ParseSchedule(0)
+	rel.ReloadSchedule(0)
 
 	b := bot.New(
 		API,
@@ -56,7 +56,7 @@ func main() {
 	wg.Add(1)
 	go func() {
 		defer wg.Done()
-		rel.UpdateSchedule()
+		rel.Start()
 	}()
 	wg.Wait()
 }
