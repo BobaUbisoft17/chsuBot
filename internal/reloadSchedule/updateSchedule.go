@@ -52,11 +52,11 @@ func (r *Reloader) ReloadSchedule(waitingTimeSeconds int) {
 	}
 	for key := range sortedScheduleByIDs {
 		wg.Add(1)
-		go func(ID int, schedules map[int][]schedule.Lecture) {
+		go func(id int, schedules map[int][]schedule.Lecture) {
 			defer wg.Done()
 			today, tomorrow := splitSchedule(schedules)
 
-			r.db.UpdateSchedule(today, tomorrow, ID)
+			r.db.UpdateSchedule(today, tomorrow, id)
 		}(key, sortedScheduleByIDs[key])
 	}
 	wg.Wait()
@@ -67,12 +67,12 @@ func (r *Reloader) ReloadSchedule(waitingTimeSeconds int) {
 func (r *Reloader) addScheduleMissingGroups(keys []int) {
 	var wg sync.WaitGroup
 	undefindTimetable := "Расписание не найдено"
-	for _, ID := range r.db.UnusedID(keys) {
+	for _, id := range r.db.UnusedID(keys) {
 		wg.Add(1)
-		go func(ID int, timetable string) {
+		go func(id int, timetable string) {
 			defer wg.Done()
-			r.db.UpdateSchedule(timetable, timetable, ID)
-		}(ID, undefindTimetable)
+			r.db.UpdateSchedule(timetable, timetable, id)
+		}(id, undefindTimetable)
 	}
 	wg.Wait()
 }

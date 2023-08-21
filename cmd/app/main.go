@@ -20,7 +20,7 @@ func main() {
 	)
 	db.Start()
 
-	API := chsuAPI.New(
+	api := chsuAPI.New(
 		map[string]string{
 			"username": "mobil",
 			"password": "ds3m#2nn",
@@ -28,21 +28,21 @@ func main() {
 		logger,
 	)
 
-	groupIDs, err := API.GroupsId()
+	groupIDs, err := api.GroupsId()
 	if err != nil {
 		panic(err)
 	}
 	db.AddGroups(groupIDs)
 
 	rel := reload.NewReloader(
-		API,
+		api,
 		db,
 		logger,
 	)
 	rel.ReloadSchedule(0)
 
 	b := bot.New(
-		API,
+		api,
 		db,
 		logger,
 		cfg.TelegramBotToken,
