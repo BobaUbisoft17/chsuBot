@@ -1,4 +1,4 @@
-package parse
+package chsuapi
 
 import "net/http"
 
