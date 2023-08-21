@@ -110,7 +110,21 @@ func (a *API) GroupsId() ([]GroupIds, error) {
 	return ids, nil
 }
 
-func (a *API) One(startDate, endDate string, groupId int) ([]schedule.Lecture, error) {
+func (api *API) One(startDate, endDate string, groupId int) ([]schedule.Lecture, error) {
+	for {
+		lectures, err := api.requestOne(startDate, endDate, groupId)
+		if errors.Is(err, ErrInvalidToken) {
+			if err = api.updateToken(); err != nil {
+				return nil, err
+			} else {
+				continue
+			}
+		}
+		return lectures, err
+	}
+}
+
+func (a *API) requestOne(startDate, endDate string, groupId int) ([]schedule.Lecture, error) {
 	requestBody := fmt.Sprintf("timetable/v1/from/%v/to/%v/groupId/%v/", startDate, endDate, groupId)
 	request, err := http.NewRequest(http.MethodGet, URL+requestBody, nil)
 	if err != nil {
@@ -130,10 +144,7 @@ func (a *API) One(startDate, endDate string, groupId int) ([]schedule.Lecture, e
 	lessons, err := readJson[[]schedule.Lecture](body)
 	if err != nil {
 		if strings.Contains(err.Error(), "invalid character") {
-			if err = a.updateToken(); err != nil {
-				return []schedule.Lecture{}, err
-			}
-			return a.One(startDate, endDate, groupId)
+			return nil, ErrInvalidToken
 		} else {
 			return []schedule.Lecture{}, err
 		}
