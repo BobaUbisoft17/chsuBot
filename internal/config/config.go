@@ -21,7 +21,7 @@ var (
 func GetConfig() *Config {
 	once.Do(func() {
 		logger := logging.New()
-		logger.Info("Чтение конфигурации приложения")
+		logger.Info("Read app configuration")
 		cfg = &Config{}
 		if err := cleanenv.ReadEnv(cfg); err != nil {
 			help, _ := cleanenv.GetDescription(cfg, nil)
