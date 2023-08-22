@@ -52,13 +52,10 @@ func stringToTimestamp(date string) (int, error) {
 
 func min(num []int) int {
 	var minNum int
-	if len(num) != 0 {
-		for i := 0; i < len(num); i++ {
-			if minNum > num[i] {
-				minNum = num[i]
-			}
+	for i := 0; i < len(num); i++ {
+		if minNum > num[i] {
+			minNum = num[i]
 		}
-		return minNum
 	}
 	return minNum
 }
