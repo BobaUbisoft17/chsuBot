@@ -37,13 +37,13 @@ func GetKeys[T comparable, N any](v map[T]N) []T {
 }
 
 func splitSchedule(schedules map[int][]schedule.Lecture) (string, string) {
-	keys := GetKeys(schedules)
-	sort.Ints(keys)
 	if len(schedules) == 2 {
 		return schedule.New(schedules[0]).Render(), schedule.New(schedules[1]).Render()
 	} else {
-		//if now time - time of 00:00 today < hours * minutes * seconds => time is today
-		if int(time.Now().Unix())-keys[0] < 24*60*60 {
+		timestamps := GetKeys(schedules)
+		sort.Ints(timestamps)
+		first := time.Unix(int64(timestamps[0]), 0)
+		if time.Since(first) < time.Hour*24 {
 			return schedule.New(schedules[0]).Render(), schedule.New([]schedule.Lecture{}).Render()
 		} else {
 			return schedule.New([]schedule.Lecture{}).Render(), schedule.New(schedules[0]).Render()
