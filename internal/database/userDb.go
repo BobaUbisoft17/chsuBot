@@ -6,7 +6,25 @@ import (
 	_ "github.com/jackc/pgx/v5/stdlib"
 )
 
-func (s *Storage) CreateUsersDatabase() {
+type UserStorage struct {
+	DbUrl  string
+	gs     groupStorage
+	logger logger
+}
+
+type groupStorage interface {
+	GroupId(string) int
+}
+
+func NewUserStorage(url string, gs groupStorage, logger logger) *UserStorage {
+	return &UserStorage{
+		DbUrl:  url,
+		gs:     gs,
+		logger: logger,
+	}
+}
+
+func (s *UserStorage) Start() {
 	db, err := sql.Open("pgx", s.DbUrl)
 	if err != nil {
 		s.logger.Error(err)
@@ -20,7 +38,7 @@ func (s *Storage) CreateUsersDatabase() {
 	statement.Exec()
 }
 
-func (s *Storage) IsUserInDB(userID int64) bool {
+func (s *UserStorage) IsUserInDB(userID int64) bool {
 	db, err := sql.Open("pgx", s.DbUrl)
 	if err != nil {
 		s.logger.Error(err)
@@ -35,7 +53,7 @@ func (s *Storage) IsUserInDB(userID int64) bool {
 	return ans
 }
 
-func (s *Storage) AddUser(userID int64) {
+func (s *UserStorage) AddUser(userID int64) {
 	db, err := sql.Open("pgx", s.DbUrl)
 	if err != nil {
 		s.logger.Error(err)
@@ -50,7 +68,7 @@ func (s *Storage) AddUser(userID int64) {
 	}
 }
 
-func (s *Storage) IsUserHasGroup(userID int64) bool {
+func (s *UserStorage) IsUserHasGroup(userID int64) bool {
 	db, err := sql.Open("pgx", s.DbUrl)
 	if err != nil {
 		s.logger.Error(err)
@@ -64,20 +82,20 @@ func (s *Storage) IsUserHasGroup(userID int64) bool {
 	return ans
 }
 
-func (s *Storage) ChangeUserGroup(userID int64, groupName string) {
+func (s *UserStorage) ChangeUserGroup(userID int64, groupName string) {
 	db, err := sql.Open("pgx", s.DbUrl)
 	if err != nil {
 		s.logger.Error(err)
 	}
 	defer db.Close()
-	groupID := s.GroupId(groupName)
+	groupID := s.gs.GroupId(groupName)
 	_, err = db.Exec("UPDATE users SET groupID=$1 WHERE userID=$2", groupID, userID)
 	if err != nil {
 		s.logger.Error(err)
 	}
 }
 
-func (s *Storage) GetUserGroup(userID int64) int {
+func (s *UserStorage) GetUserGroup(userID int64) int {
 	db, err := sql.Open("pgx", s.DbUrl)
 	if err != nil {
 		s.logger.Error(err)
@@ -92,7 +110,7 @@ func (s *Storage) GetUserGroup(userID int64) int {
 	return group
 }
 
-func (s *Storage) DeleteGroup(userID int64) {
+func (s *UserStorage) DeleteGroup(userID int64) {
 	db, err := sql.Open("pgx", s.DbUrl)
 	if err != nil {
 		s.logger.Error(err)

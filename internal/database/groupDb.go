@@ -7,7 +7,7 @@ import (
 	_ "github.com/jackc/pgx/v5/stdlib"
 )
 
-type Storage struct {
+type GroupStorage struct {
 	DbUrl  string
 	logger logger
 }
@@ -18,21 +18,15 @@ type logger interface {
 	Error(args ...interface{})
 }
 
-func NewStorage(url string, logger logger) *Storage {
-	return &Storage{
+func NewGroupStorage(url string, logger logger) *GroupStorage {
+	return &GroupStorage{
 		DbUrl:  url,
 		logger: logger,
 	}
 
 }
 
-func (s *Storage) Start() {
-	s.CreateGroupDatabase()
-	s.CreateUsersDatabase()
-	s.logger.Info("Таблицы созданы")
-}
-
-func (s *Storage) CreateGroupDatabase() {
+func (s *GroupStorage) Start() {
 	db, err := sql.Open("pgx", s.DbUrl)
 	if err != nil {
 		s.logger.Error(err)
@@ -46,7 +40,7 @@ func (s *Storage) CreateGroupDatabase() {
 	}
 }
 
-func (s *Storage) AddGroups(groupIds []chsuAPI.GroupIds) {
+func (s *GroupStorage) AddGroups(groupIds []chsuAPI.GroupIds) {
 	db, err := sql.Open("pgx", s.DbUrl)
 	if err != nil {
 		s.logger.Error(err)
@@ -68,7 +62,7 @@ func (s *Storage) AddGroups(groupIds []chsuAPI.GroupIds) {
 	}
 }
 
-func (s *Storage) GroupId(groupName string) int {
+func (s *GroupStorage) GroupId(groupName string) int {
 	db, err := sql.Open("pgx", s.DbUrl)
 	if err != nil {
 		s.logger.Error(err)
@@ -83,7 +77,7 @@ func (s *Storage) GroupId(groupName string) int {
 	return group
 }
 
-func (s *Storage) GetGroupIds() []int {
+func (s *GroupStorage) GetGroupIds() []int {
 	db, err := sql.Open("pgx", s.DbUrl)
 	if err != nil {
 		s.logger.Error(err)
@@ -105,7 +99,7 @@ func (s *Storage) GetGroupIds() []int {
 	return groupIds
 }
 
-func (s *Storage) GroupNameIsCorrect(groupName string) bool {
+func (s *GroupStorage) GroupNameIsCorrect(groupName string) bool {
 	db, err := sql.Open("pgx", s.DbUrl)
 	if err != nil {
 		s.logger.Error(err)
@@ -120,7 +114,7 @@ func (s *Storage) GroupNameIsCorrect(groupName string) bool {
 	return ans
 }
 
-func (s *Storage) GetGroupNames() []string {
+func (s *GroupStorage) GetGroupNames() []string {
 	db, err := sql.Open("pgx", s.DbUrl)
 	if err != nil {
 		s.logger.Error(err)
@@ -142,7 +136,7 @@ func (s *Storage) GetGroupNames() []string {
 	return groupNames
 }
 
-func (s *Storage) UpdateSchedule(todaySchedule, tomorrowSchedule string, groupID int) {
+func (s *GroupStorage) UpdateSchedule(todaySchedule, tomorrowSchedule string, groupID int) {
 	db, err := sql.Open("pgx", s.DbUrl)
 	if err != nil {
 		s.logger.Error(err)
@@ -154,7 +148,7 @@ func (s *Storage) UpdateSchedule(todaySchedule, tomorrowSchedule string, groupID
 	}
 }
 
-func (s *Storage) UnusedID(IDs []int) []int {
+func (s *GroupStorage) UnusedID(IDs []int) []int {
 	unusedKeys := []int{}
 	usedKeys := make(map[int]bool)
 	for _, ID := range IDs {
@@ -180,7 +174,7 @@ func (s *Storage) UnusedID(IDs []int) []int {
 	return unusedKeys
 }
 
-func (s *Storage) GetTodaySchedule(groupID int) string {
+func (s *GroupStorage) GetTodaySchedule(groupID int) string {
 	db, err := sql.Open("pgx", s.DbUrl)
 	if err != nil {
 		s.logger.Error(err)
@@ -196,7 +190,7 @@ func (s *Storage) GetTodaySchedule(groupID int) string {
 	return ans
 }
 
-func (s *Storage) GetTomorrowSchedule(groupID int) string {
+func (s *GroupStorage) GetTomorrowSchedule(groupID int) string {
 	db, err := sql.Open("pgx", s.DbUrl)
 	if err != nil {
 		s.logger.Error(err)

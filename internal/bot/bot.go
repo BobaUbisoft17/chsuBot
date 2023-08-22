@@ -9,16 +9,19 @@ type api interface {
 	One(startDate, endDate string, groupId int) ([]schedule.Lecture, error)
 }
 
-type storage interface {
-	AddUser(userID int64)
-	ChangeUserGroup(userID int64, groupName string)
-	DeleteGroup(userID int64)
+type groupStorage interface {
 	GetGroupNames() []string
 	GetTodaySchedule(groupID int) string
 	GetTomorrowSchedule(groupID int) string
-	GetUserGroup(userID int64) int
 	GroupId(string) int
 	GroupNameIsCorrect(groupName string) bool
+}
+
+type userStorage interface {
+	AddUser(userID int64)
+	ChangeUserGroup(userID int64, groupName string)
+	DeleteGroup(userID int64)
+	GetUserGroup(userID int64) int
 	IsUserHasGroup(userID int64) bool
 	IsUserInDB(userID int64) bool
 }
@@ -43,15 +46,17 @@ type bot struct {
 	endDate   string
 	echotron.API
 	chsuAPI api
-	db      storage
+	groupDb groupStorage
 	logger  logger
 	token   string
+	usersDb userStorage
 }
 
-func New(api api, db storage, logger logger, token string) *bot {
+func New(api api, groupDb groupStorage, userDb userStorage, logger logger, token string) *bot {
 	return &bot{
 		chsuAPI: api,
-		db:      db,
+		groupDb: groupDb,
+		usersDb: userDb,
 		logger:  logger,
 		token:   token,
 	}

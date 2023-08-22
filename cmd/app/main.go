@@ -14,11 +14,20 @@ import (
 func main() {
 	cfg := config.GetConfig()
 	logger := logging.New()
-	db := database.NewStorage(
+
+	groupDb := database.NewGroupStorage(
 		cfg.DatabaseURL,
 		logger,
 	)
-	db.Start()
+
+	userDb := database.NewUserStorage(
+		cfg.DatabaseURL,
+		groupDb,
+		logger,
+	)
+
+	groupDb.Start()
+	userDb.Start()
 
 	api := chsuAPI.New(
 		map[string]string{
@@ -32,18 +41,20 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
-	db.AddGroups(groupIDs)
+
+	groupDb.AddGroups(groupIDs)
 
 	rel := reload.NewReloader(
 		api,
-		db,
+		groupDb,
 		logger,
 	)
 	rel.ReloadSchedule(0)
 
 	b := bot.New(
 		api,
-		db,
+		groupDb,
+		userDb,
 		logger,
 		cfg.TelegramBotToken,
 	)

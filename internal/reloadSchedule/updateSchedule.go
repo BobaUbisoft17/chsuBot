@@ -24,16 +24,16 @@ type logger interface {
 }
 
 type Reloader struct {
-	api    chsuAPI
-	db     groupStorage
-	logger logger
+	api     chsuAPI
+	groupDb groupStorage
+	logger  logger
 }
 
 func NewReloader(api chsuAPI, db groupStorage, logger logger) *Reloader {
 	return &Reloader{
-		api:    api,
-		db:     db,
-		logger: logger,
+		api:     api,
+		groupDb: db,
+		logger:  logger,
 	}
 }
 
@@ -56,7 +56,7 @@ func (r *Reloader) ReloadSchedule(waitingTimeSeconds int) {
 			defer wg.Done()
 			today, tomorrow := splitSchedule(schedules)
 
-			r.db.UpdateSchedule(today, tomorrow, id)
+			r.groupDb.UpdateSchedule(today, tomorrow, id)
 		}(key, sortedScheduleByIDs[key])
 	}
 	wg.Wait()
@@ -67,11 +67,11 @@ func (r *Reloader) ReloadSchedule(waitingTimeSeconds int) {
 func (r *Reloader) addScheduleMissingGroups(keys []int) {
 	var wg sync.WaitGroup
 	undefindTimetable := "Расписание не найдено"
-	for _, id := range r.db.UnusedID(keys) {
+	for _, id := range r.groupDb.UnusedID(keys) {
 		wg.Add(1)
 		go func(id int, timetable string) {
 			defer wg.Done()
-			r.db.UpdateSchedule(timetable, timetable, id)
+			r.groupDb.UpdateSchedule(timetable, timetable, id)
 		}(id, undefindTimetable)
 	}
 	wg.Wait()

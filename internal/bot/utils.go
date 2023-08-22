@@ -100,7 +100,7 @@ func (b *bot) closeCalendarMarkup(callback *echotron.CallbackQuery) {
 }
 
 func (b *bot) getGroupKeyboard() {
-	replyMarkup := kb.FirstPartGroups(b.db.GetGroupNames())
+	replyMarkup := kb.FirstPartGroups(b.groupDb.GetGroupNames())
 	messageOptions := getReplyMarkupMessageOptions(replyMarkup)
 	b.SendMessage("Введите назвние вашей группы", b.chatID, &messageOptions)
 }
@@ -125,7 +125,7 @@ func (b *bot) editGroupKeyboard(message string) {
 	} else if message == "Дальше »" || message == "« Обратно" {
 		b.answer(
 			"Меняем клавиатуру",
-			kb.GetKeyboardPart(message, b.db.GetGroupNames()),
+			kb.GetKeyboardPart(message, b.groupDb.GetGroupNames()),
 		)
 	}
 }

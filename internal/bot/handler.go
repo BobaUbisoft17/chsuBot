@@ -73,40 +73,40 @@ func (b *bot) back() {
 }
 
 func (b *bot) getTodaySchedule() {
-	if b.db.IsUserHasGroup(b.chatID) || b.group != 0 {
+	if b.usersDb.IsUserHasGroup(b.chatID) || b.group != 0 {
 		var groupID int
 		if b.group != 0 {
 			groupID, b.group = b.group, 0
 		} else {
-			groupID = b.db.GetUserGroup(b.chatID)
+			groupID = b.usersDb.GetUserGroup(b.chatID)
 		}
 		b.answer(
-			b.db.GetTodaySchedule(groupID),
+			b.groupDb.GetTodaySchedule(groupID),
 			kb.ChooseDateMarkup(),
 		)
 	} else {
 		b.state = b.getGroup
 		b.nextState = b.getTodaySchedule
-		b.answer("Введите название вашей группы", kb.FirstPartGroups(b.db.GetGroupNames()))
+		b.answer("Введите название вашей группы", kb.FirstPartGroups(b.groupDb.GetGroupNames()))
 	}
 }
 
 func (b *bot) getTomorrowSchedule() {
-	if b.db.IsUserHasGroup(b.chatID) || b.group != 0 {
+	if b.usersDb.IsUserHasGroup(b.chatID) || b.group != 0 {
 		var groupID int
 		if b.group != 0 {
 			groupID, b.group = b.group, 0
 		} else {
-			groupID = b.db.GetUserGroup(b.chatID)
+			groupID = b.usersDb.GetUserGroup(b.chatID)
 		}
 		b.answer(
-			b.db.GetTomorrowSchedule(groupID),
+			b.groupDb.GetTomorrowSchedule(groupID),
 			kb.ChooseDateMarkup(),
 		)
 	} else {
 		b.nextState = b.getTomorrowSchedule
 		b.state = b.getGroup
-		b.answer("Введите название вашей группы", kb.FirstPartGroups(b.db.GetGroupNames()))
+		b.answer("Введите название вашей группы", kb.FirstPartGroups(b.groupDb.GetGroupNames()))
 	}
 }
 
@@ -130,8 +130,8 @@ func (b *bot) getDate(update *echotron.Update) stateFn {
 	case callback != nil && callback.Data != "nil":
 		b.startDate = callback.Data
 		b.closeCalendarMarkup(callback)
-		if b.db.IsUserHasGroup(b.chatID) {
-			b.group = b.db.GetUserGroup(b.chatID)
+		if b.usersDb.IsUserHasGroup(b.chatID) {
+			b.group = b.usersDb.GetUserGroup(b.chatID)
 			b.sendSchedule()
 			b.state = b.HandleMessage
 		} else {
@@ -147,8 +147,8 @@ func (b *bot) getGroup(update *echotron.Update) stateFn {
 	message := update.Message.Text
 	if manageGroupKeyboard[message] {
 		b.editGroupKeyboard(message)
-	} else if b.db.GroupNameIsCorrect(message) {
-		b.group = b.db.GroupId(message)
+	} else if b.groupDb.GroupNameIsCorrect(message) {
+		b.group = b.groupDb.GroupId(message)
 		b.nextState()
 		b.state = b.HandleMessage
 	} else {
@@ -195,8 +195,8 @@ func (b *bot) getSecondDate(update *echotron.Update) stateFn {
 		_ = b.orderDateCheck()
 		if b.validDuration() {
 			b.closeCalendarMarkup(callback)
-			if b.db.IsUserHasGroup(b.chatID) {
-				b.group = b.db.GetUserGroup(b.chatID)
+			if b.usersDb.IsUserHasGroup(b.chatID) {
+				b.group = b.usersDb.GetUserGroup(b.chatID)
 				b.sendSchedule()
 				b.state = b.HandleMessage
 			} else {
@@ -216,10 +216,10 @@ func (b *bot) getSecondDate(update *echotron.Update) stateFn {
 
 func (b *bot) getSettings() {
 	var replyMarkup echotron.ReplyKeyboardMarkup
-	if !b.db.IsUserInDB(b.chatID) {
-		b.db.AddUser(b.chatID)
+	if !b.usersDb.IsUserInDB(b.chatID) {
+		b.usersDb.AddUser(b.chatID)
 	}
-	if b.db.IsUserHasGroup(b.chatID) {
+	if b.usersDb.IsUserHasGroup(b.chatID) {
 		replyMarkup = kb.ChangeGroupKeyboard()
 	} else {
 		replyMarkup = kb.MemoryGroupKeyboard()
@@ -228,7 +228,7 @@ func (b *bot) getSettings() {
 }
 
 func (b *bot) memoryGroup() {
-	if !b.db.IsUserHasGroup(b.chatID) {
+	if !b.usersDb.IsUserHasGroup(b.chatID) {
 		b.state = b.addUserGroup
 		b.getGroupKeyboard()
 	} else {
@@ -240,8 +240,8 @@ func (b *bot) addUserGroup(update *echotron.Update) stateFn {
 	message := update.Message.Text
 	if manageGroupKeyboard[message] {
 		b.editGroupKeyboard(message)
-	} else if b.db.GroupNameIsCorrect(message) {
-		b.db.ChangeUserGroup(b.chatID, message)
+	} else if b.groupDb.GroupNameIsCorrect(message) {
+		b.usersDb.ChangeUserGroup(b.chatID, message)
 		b.state = b.HandleMessage
 		b.answer(
 			"Я вас запомнил, теперь вам не нужно выбирать группу",
@@ -257,7 +257,7 @@ func (b *bot) addUserGroup(update *echotron.Update) stateFn {
 }
 
 func (b *bot) changeGroup() {
-	if b.db.IsUserHasGroup(b.chatID) {
+	if b.usersDb.IsUserHasGroup(b.chatID) {
 		b.state = b.updateUserGroup
 		b.getGroupKeyboard()
 	} else {
@@ -267,10 +267,10 @@ func (b *bot) changeGroup() {
 
 func (b *bot) updateUserGroup(update *echotron.Update) stateFn {
 	groupName := update.Message.Text
-	if b.db.GroupNameIsCorrect(groupName) {
-		if b.db.GetUserGroup(b.chatID) != b.db.GroupId(groupName) {
+	if b.groupDb.GroupNameIsCorrect(groupName) {
+		if b.usersDb.GetUserGroup(b.chatID) != b.groupDb.GroupId(groupName) {
 			b.state = b.HandleMessage
-			b.db.ChangeUserGroup(b.chatID, groupName)
+			b.usersDb.ChangeUserGroup(b.chatID, groupName)
 			b.answer(
 				"Вы успешно изменили группу",
 				kb.GreetingKeyboard(),
@@ -291,8 +291,8 @@ func (b *bot) updateUserGroup(update *echotron.Update) stateFn {
 }
 
 func (b *bot) deleteGroupInfo() {
-	if b.db.IsUserHasGroup(b.chatID) {
-		b.db.DeleteGroup(b.chatID)
+	if b.usersDb.IsUserHasGroup(b.chatID) {
+		b.usersDb.DeleteGroup(b.chatID)
 		replyMarkup := kb.GreetingKeyboard()
 		b.answer("Данные о вашей группе успешно удалены", replyMarkup)
 	} else {
