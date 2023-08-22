@@ -42,8 +42,8 @@ func splitSchedule(schedules map[int][]schedule.Lecture) (string, string) {
 	} else {
 		timestamps := GetKeys(schedules)
 		sort.Ints(timestamps)
-		//if now time - time of 00:00 today < hours * minutes * seconds => time is today
-		if int(time.Now().Unix())-timestamps[0] < 24*60*60 {
+		first := time.Unix(int64(timestamps[0]), 0)
+		if time.Since(first) < time.Hour*24 {
 			return schedule.New(schedules[0]).Render(), schedule.New([]schedule.Lecture{}).Render()
 		} else {
 			return schedule.New([]schedule.Lecture{}).Render(), schedule.New(schedules[0]).Render()
