@@ -37,11 +37,11 @@ func GetKeys[T comparable, N any](v map[T]N) []T {
 }
 
 func splitSchedule(schedules map[int][]schedule.Lecture) (string, string) {
-	keys := GetKeys(schedules)
-	sort.Ints(keys)
 	if len(schedules) == 2 {
 		return schedule.New(schedules[0]).Render(), schedule.New(schedules[1]).Render()
 	} else {
+		keys := GetKeys(schedules)
+		sort.Ints(keys)
 		//if now time - time of 00:00 today < hours * minutes * seconds => time is today
 		if int(time.Now().Unix())-keys[0] < 24*60*60 {
 			return schedule.New(schedules[0]).Render(), schedule.New([]schedule.Lecture{}).Render()
