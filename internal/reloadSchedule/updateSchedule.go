@@ -37,12 +37,12 @@ func (r *Reloader) ReloadSchedule(waitingTimeSeconds int) {
 	var wg sync.WaitGroup
 	unSortedSchedule, err := r.api.All()
 	if err != nil {
-		r.logger.Errorf("%w", err)
+		r.logger.Errorf("%v", err)
 		return
 	}
 	sortedScheduleByIDs, err := collectLecture(unSortedSchedule)
 	if err != nil {
-		r.logger.Errorf("%w", err)
+		r.logger.Errorf("%v", err)
 	}
 	for key := range sortedScheduleByIDs {
 		wg.Add(1)
