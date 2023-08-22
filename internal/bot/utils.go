@@ -32,7 +32,7 @@ func (b *bot) sendSchedule() {
 
 	unParseSchedule, err := b.chsuAPI.One(b.startDate, b.endDate, b.group)
 	if err != nil {
-		b.logger.Info(err)
+		b.logger.Errorf("%v", err)
 	}
 
 	schedule, err := buildSchedule(unParseSchedule)
@@ -81,13 +81,13 @@ func buildSchedule(schedules []schedule.Lecture) ([]string, error) {
 func (b *bot) changeMonth(callback *echotron.CallbackQuery) {
 	month, year, err := getDate(callback.Data)
 	if err != nil {
-		b.logger.Errorf("Ошибка получение даты: %v", err)
+		b.logger.Errorf("Error getting date: %v", err)
 	}
 	var markup echotron.InlineKeyboardMarkup
 	if strings.Contains(callback.Data, "next") {
 		markup = calendar.New(month, year).NextMonth()
 	} else {
-		markup = calendar.New(month, year).NextMonth()
+		markup = calendar.New(month, year).PreviousMonth()
 	}
 	message := echotron.NewMessageID(b.chatID, callback.Message.ID)
 	opts := echotron.MessageReplyMarkup{ReplyMarkup: markup}
