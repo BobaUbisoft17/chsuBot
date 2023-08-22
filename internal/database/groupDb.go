@@ -4,21 +4,16 @@ import (
 	"database/sql"
 
 	chsuAPI "github.com/BobaUbisoft17/chsuBot/internal/chsuAPI"
+	"github.com/BobaUbisoft17/chsuBot/pkg/logging"
 	_ "github.com/jackc/pgx/v5/stdlib"
 )
 
 type GroupStorage struct {
 	DbUrl  string
-	logger logger
+	logger *logging.Logger
 }
 
-type logger interface {
-	Info(args ...interface{})
-	Infof(format string, args ...interface{})
-	Error(args ...interface{})
-}
-
-func NewGroupStorage(url string, logger logger) *GroupStorage {
+func NewGroupStorage(url string, logger *logging.Logger) *GroupStorage {
 	return &GroupStorage{
 		DbUrl:  url,
 		logger: logger,

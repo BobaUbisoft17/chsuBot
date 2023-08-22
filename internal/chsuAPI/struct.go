@@ -1,19 +1,16 @@
 package chsuapi
 
-import "net/http"
+import (
+	"net/http"
 
-type logger interface {
-	Info(args ...interface{})
-	Infof(format string, args ...interface{})
-	Error(args ...interface{})
-	Errorf(format string, args ...interface{})
-}
+	"github.com/BobaUbisoft17/chsuBot/pkg/logging"
+)
 
 type API struct {
 	Data   map[string]string
 	Token  string
 	Client *http.Client
-	logger logger
+	logger *logging.Logger
 }
 
 type Token struct {

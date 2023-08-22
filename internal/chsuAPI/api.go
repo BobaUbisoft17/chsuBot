@@ -12,13 +12,14 @@ import (
 	"time"
 
 	"github.com/BobaUbisoft17/chsuBot/internal/schedule"
+	"github.com/BobaUbisoft17/chsuBot/pkg/logging"
 )
 
 const URL = "http://api.chsu.ru/api/"
 
 var ErrInvalidToken = errors.New("Invalid token")
 
-func New(data map[string]string, logger logger) *API {
+func New(data map[string]string, logger *logging.Logger) *API {
 	return &API{
 		Data:   data,
 		Client: &http.Client{},

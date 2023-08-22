@@ -3,20 +3,21 @@ package database
 import (
 	"database/sql"
 
+	"github.com/BobaUbisoft17/chsuBot/pkg/logging"
 	_ "github.com/jackc/pgx/v5/stdlib"
 )
 
 type UserStorage struct {
 	DbUrl  string
 	gs     groupStorage
-	logger logger
+	logger *logging.Logger
 }
 
 type groupStorage interface {
 	GroupId(string) int
 }
 
-func NewUserStorage(url string, gs groupStorage, logger logger) *UserStorage {
+func NewUserStorage(url string, gs groupStorage, logger *logging.Logger) *UserStorage {
 	return &UserStorage{
 		DbUrl:  url,
 		gs:     gs,

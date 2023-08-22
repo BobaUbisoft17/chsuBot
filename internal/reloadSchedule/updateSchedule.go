@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"github.com/BobaUbisoft17/chsuBot/internal/schedule"
+	"github.com/BobaUbisoft17/chsuBot/pkg/logging"
 )
 
 type chsuAPI interface {
@@ -16,20 +17,13 @@ type groupStorage interface {
 	UnusedID(ID []int) []int
 }
 
-type logger interface {
-	Info(args ...interface{})
-	Infof(format string, args ...interface{})
-	Error(args ...interface{})
-	Errorf(format string, args ...interface{})
-}
-
 type Reloader struct {
 	api     chsuAPI
 	groupDb groupStorage
-	logger  logger
+	logger  *logging.Logger
 }
 
-func NewReloader(api chsuAPI, db groupStorage, logger logger) *Reloader {
+func NewReloader(api chsuAPI, db groupStorage, logger *logging.Logger) *Reloader {
 	return &Reloader{
 		api:     api,
 		groupDb: db,

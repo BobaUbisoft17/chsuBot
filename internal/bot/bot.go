@@ -2,6 +2,7 @@ package bot
 
 import (
 	"github.com/BobaUbisoft17/chsuBot/internal/schedule"
+	"github.com/BobaUbisoft17/chsuBot/pkg/logging"
 	"github.com/NicoNex/echotron/v3"
 )
 
@@ -26,13 +27,6 @@ type userStorage interface {
 	IsUserInDB(userID int64) bool
 }
 
-type logger interface {
-	Error(args ...interface{})
-	Errorf(format string, args ...interface{})
-	Info(args ...interface{})
-	Infof(format string, args ...interface{})
-}
-
 type stateFn func(*echotron.Update) stateFn
 
 type nextFn func()
@@ -47,12 +41,12 @@ type bot struct {
 	echotron.API
 	chsuAPI api
 	groupDb groupStorage
-	logger  logger
+	logger  *logging.Logger
 	token   string
 	usersDb userStorage
 }
 
-func New(api api, groupDb groupStorage, userDb userStorage, logger logger, token string) *bot {
+func New(api api, groupDb groupStorage, userDb userStorage, logger *logging.Logger, token string) *bot {
 	return &bot{
 		chsuAPI: api,
 		groupDb: groupDb,
