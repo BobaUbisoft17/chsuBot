@@ -133,7 +133,7 @@ func (b *bot) editGroupKeyboard(message string) {
 func sortScheduleByDate(timetable []schedule.Lecture) (map[int][]schedule.Lecture, error) {
 	scheduleByDays := make(map[int][]schedule.Lecture)
 	for _, lecture := range timetable {
-		timestamp, err := stringToTimestamp(lecture.DateEvent)
+		timestamp, err := pkg.StringToTimestamp(lecture.DateEvent)
 		if err != nil {
 			return map[int][]schedule.Lecture{}, err
 		}
@@ -182,9 +182,4 @@ func (b *bot) orderDateCheck() error {
 		b.startDate, b.endDate = b.endDate, b.startDate
 	}
 	return nil
-}
-
-func stringToTimestamp(date string) (int, error) {
-	timeObject, err := time.Parse("02.01.2006", date)
-	return int(timeObject.Unix()), err
 }

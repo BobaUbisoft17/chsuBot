@@ -12,7 +12,7 @@ func collectLecture(sched []schedule.Lecture) (map[int]map[int][]schedule.Lectur
 	for _, lesson := range sched {
 		dateEvent := lesson.DateEvent
 		for _, group := range lesson.Groups {
-			timestamp, err := stringToTimestamp(dateEvent)
+			timestamp, err := pkg.StringToTimestamp(dateEvent)
 			if err != nil {
 				return scheds, err
 			}
@@ -40,14 +40,6 @@ func splitSchedule(schedules map[int][]schedule.Lecture) ([]schedule.Lecture, []
 		return schedules[0], []schedule.Lecture{}
 	}
 	return []schedule.Lecture{}, schedules[0]
-}
-
-func stringToTimestamp(date string) (int, error) {
-	timeObject, err := time.Parse("02.01.2006", date)
-	if err != nil {
-		return 0, err
-	}
-	return int(timeObject.Unix()), nil
 }
 
 func min(num []int) int {
