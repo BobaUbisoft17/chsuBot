@@ -8,8 +8,8 @@ import (
 
 	calendar "github.com/BobaUbisoft17/chsuBot/internal/bot/keyboard/inlineKeyboard"
 	kb "github.com/BobaUbisoft17/chsuBot/internal/bot/keyboard/replyKeyboard"
-	reload "github.com/BobaUbisoft17/chsuBot/internal/reloadSchedule"
 	"github.com/BobaUbisoft17/chsuBot/internal/schedule"
+	"github.com/BobaUbisoft17/chsuBot/pkg"
 	"github.com/NicoNex/echotron/v3"
 )
 
@@ -65,7 +65,7 @@ func buildSchedule(schedules []schedule.Lecture) ([]string, error) {
 	if err != nil {
 		return []string{}, err
 	}
-	keys := reload.GetKeys(sortedSchedule)
+	keys := pkg.GetKeys(sortedSchedule)
 	sort.Ints(keys)
 	for _, key := range keys {
 		daySchedule := schedule.New(sortedSchedule[key]).Render()

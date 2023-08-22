@@ -1,10 +1,10 @@
 package reload
 
 import (
-	"sort"
 	"time"
 
 	"github.com/BobaUbisoft17/chsuBot/internal/schedule"
+	"github.com/BobaUbisoft17/chsuBot/pkg"
 )
 
 func collectLecture(sched []schedule.Lecture) (map[int]map[int][]schedule.Lecture, error) {
@@ -28,27 +28,18 @@ func collectLecture(sched []schedule.Lecture) (map[int]map[int][]schedule.Lectur
 	return scheds, nil
 }
 
-func GetKeys[T comparable, N any](v map[T]N) []T {
-	keys := make([]T, 0, len(v))
-	for key := range v {
-		keys = append(keys, key)
-	}
-	return keys
-}
-
-func splitSchedule(schedules map[int][]schedule.Lecture) (string, string) {
+func splitSchedule(schedules map[int][]schedule.Lecture) ([]schedule.Lecture, []schedule.Lecture) {
 	if len(schedules) == 2 {
-		return schedule.New(schedules[0]).Render(), schedule.New(schedules[1]).Render()
-	} else {
-		timestamps := GetKeys(schedules)
-		sort.Ints(timestamps)
-		first := time.Unix(int64(timestamps[0]), 0)
-		if time.Since(first) < time.Hour*24 {
-			return schedule.New(schedules[0]).Render(), schedule.New([]schedule.Lecture{}).Render()
-		} else {
-			return schedule.New([]schedule.Lecture{}).Render(), schedule.New(schedules[0]).Render()
-		}
+		return schedules[0], schedules[1]
 	}
+	datesInTimestamp := pkg.GetKeys(schedules)
+	todayTimestamp := min(datesInTimestamp)
+	today := time.Unix(int64(todayTimestamp), 0)
+
+	if time.Since(today) < time.Hour*24 {
+		return schedules[0], []schedule.Lecture{}
+	}
+	return []schedule.Lecture{}, schedules[0]
 }
 
 func stringToTimestamp(date string) (int, error) {
@@ -57,4 +48,17 @@ func stringToTimestamp(date string) (int, error) {
 		return 0, err
 	}
 	return int(timeObject.Unix()), nil
+}
+
+func min(num []int) int {
+	var minNum int
+	if len(num) != 0 {
+		for i := 0; i < len(num); i++ {
+			if minNum > num[i] {
+				minNum = num[i]
+			}
+		}
+		return minNum
+	}
+	return minNum
 }

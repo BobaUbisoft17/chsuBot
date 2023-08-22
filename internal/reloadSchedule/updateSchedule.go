@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"github.com/BobaUbisoft17/chsuBot/internal/schedule"
+	"github.com/BobaUbisoft17/chsuBot/pkg"
 	"github.com/BobaUbisoft17/chsuBot/pkg/logging"
 )
 
@@ -13,7 +14,7 @@ type chsuAPI interface {
 }
 
 type groupStorage interface {
-	UpdateSchedule(todaySchedule, tomorrowSchedule string, groupID int)
+	UpdateSchedule(todaySchedule, tomorrowSchedule []schedule.Lecture, groupID int)
 	UnusedID(ID []int) []int
 }
 
@@ -54,19 +55,18 @@ func (r *Reloader) ReloadSchedule(waitingTimeSeconds int) {
 		}(key, sortedScheduleByIDs[key])
 	}
 	wg.Wait()
-	r.addScheduleMissingGroups(GetKeys(sortedScheduleByIDs))
+	r.addScheduleMissingGroups(pkg.GetKeys(sortedScheduleByIDs))
 	r.logger.Info("Schedule updated succesfully")
 }
 
 func (r *Reloader) addScheduleMissingGroups(keys []int) {
 	var wg sync.WaitGroup
-	undefindTimetable := "Расписание не найдено"
 	for _, id := range r.groupDb.UnusedID(keys) {
 		wg.Add(1)
-		go func(id int, timetable string) {
+		go func(id int) {
 			defer wg.Done()
-			r.groupDb.UpdateSchedule(timetable, timetable, id)
-		}(id, undefindTimetable)
+			r.groupDb.UpdateSchedule([]schedule.Lecture{}, []schedule.Lecture{}, id)
+		}(id)
 	}
 	wg.Wait()
 }
