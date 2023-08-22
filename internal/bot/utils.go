@@ -156,8 +156,7 @@ func getDate(data string) (int, int, error) {
 }
 
 func parseDate(date string) (time.Time, error) {
-	dateTime, err := time.Parse("02.01.2006", date)
-	return dateTime, err
+	return time.Parse("02.01.2006", date)
 }
 
 func (b *bot) validDuration() bool {
