@@ -37,7 +37,7 @@ func (b *bot) sendSchedule() {
 
 	schedule, err := buildSchedule(unParseSchedule)
 	if err != nil {
-		b.logger.Error(err)
+		b.logger.Errorf("%v", err)
 		b.group = 0
 		return
 	}
@@ -81,7 +81,7 @@ func buildSchedule(schedules []schedule.Lecture) ([]string, error) {
 func (b *bot) changeMonth(callback *echotron.CallbackQuery) {
 	month, year, err := getDate(callback.Data)
 	if err != nil {
-		b.logger.Errorf("Ошибка получение даты: %s", err)
+		b.logger.Errorf("Ошибка получение даты: %v", err)
 	}
 	var markup echotron.InlineKeyboardMarkup
 	if strings.Contains(callback.Data, "next") {
