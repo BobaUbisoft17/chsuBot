@@ -26,6 +26,8 @@ func (b *bot) HandleMessage(update *echotron.Update) stateFn {
 	switch update.Message.Text {
 	case "/start":
 		b.sendWelcome()
+	case "Сделать запись":
+		b.IsAdmin(b.createPost)
 	case "Узнать расписание":
 		b.chooseDate()
 	case "Назад":

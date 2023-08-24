@@ -4,6 +4,7 @@ import (
 	"sort"
 	"strconv"
 	"strings"
+	"sync"
 	"time"
 
 	calendar "github.com/BobaUbisoft17/chsuBot/internal/bot/keyboard/inlineKeyboard"
@@ -15,7 +16,14 @@ import (
 
 func (b *bot) answer(answer string, keyboard echotron.ReplyMarkup) {
 	messageOptions := getReplyMarkupMessageOptions(keyboard)
-	b.SendMessage(answer, b.chatID, &messageOptions)
+	_, err := b.SendMessage(answer, b.chatID, &messageOptions)
+	if err != nil {
+		if err.Error() == "API error: 403 Forbidden: bot was blocked by the user" {
+			b.usersDb.DeleteUser(int64(b.chatID))
+		} else {
+			b.logger.Errorf("%v", err)
+		}
+	}
 }
 
 func getReplyMarkupMessageOptions(replyMarkup echotron.ReplyMarkup) echotron.MessageOptions {
@@ -23,6 +31,52 @@ func getReplyMarkupMessageOptions(replyMarkup echotron.ReplyMarkup) echotron.Mes
 		ReplyMarkup: replyMarkup,
 		ParseMode:   "Markdown",
 	}
+}
+
+func (b *bot) sendTextPost() {
+	var wg sync.WaitGroup
+	userIDs := b.usersDb.GetUsersId()
+	for _, userID := range userIDs {
+		wg.Add(1)
+		go func(userID int, text string) {
+			defer wg.Done()
+			_, err := b.SendMessage(text, int64(userID), nil)
+			if err != nil {
+				if err.Error() == "API error: 403 Forbidden: bot was blocked by the user" {
+					b.usersDb.DeleteUser(int64(userID))
+				} else {
+					b.logger.Errorf("%v", err)
+				}
+			}
+		}(userID, b.postText)
+	}
+	wg.Wait()
+	b.state = b.HandleMessage
+	b.postText = ""
+	b.answer("Все пользователи оповещены", kb.GreetingKeyboard())
+}
+
+func (b *bot) sendPostWithImage() {
+	var wg sync.WaitGroup
+	userIDs := b.usersDb.GetUsersId()
+	photoOpts := echotron.PhotoOptions{
+		Caption: b.postText,
+	}
+	for _, userID := range userIDs {
+		wg.Add(1)
+		go func(userID int64, photo echotron.InputFile, photoOpts echotron.PhotoOptions) {
+			defer wg.Done()
+			_, err := b.SendPhoto(photo, int64(userID), &photoOpts)
+			if err.Error() == "API error: 403 Forbidden: bot was blocked by the user" {
+				b.usersDb.DeleteUser(int64(userID))
+			} else {
+				b.logger.Errorf("%v", err)
+			}
+		}(int64(userID), b.postPhoto, photoOpts)
+	}
+	wg.Wait()
+	b.postText, b.postPhoto = "", echotron.InputFile{}
+	b.answer("Все пользователи оповещены", kb.GreetingKeyboard())
 }
 
 func (b *bot) sendSchedule() {

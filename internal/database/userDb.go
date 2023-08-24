@@ -62,7 +62,7 @@ func (s *UserStorage) AddUser(userID int64) {
 	defer db.Close()
 	InDB := s.IsUserInDB(userID)
 	if !InDB {
-		_, err := db.Exec("INSERT INTO users (userID, groupID) VALUES ($1)", userID)
+		_, err := db.Exec("INSERT INTO users (userID, groupID) VALUES ($1, NULL)", userID)
 		if err != nil {
 			s.logger.Error(err)
 		}
@@ -121,4 +121,39 @@ func (s *UserStorage) DeleteGroup(userID int64) {
 	if err != nil {
 		s.logger.Error(err)
 	}
+}
+
+func (s *UserStorage) DeleteUser(userID int64) {
+	db, err := sql.Open("pgx", s.DbUrl)
+	if err != nil {
+		s.logger.Error(err)
+	}
+	defer db.Close()
+	_, err = db.Exec("DELETE FROM users WHERE userID=$1", userID)
+	if err != nil {
+		s.logger.Error(err)
+	}
+}
+
+func (s *UserStorage) GetUsersId() []int {
+
+	db, err := sql.Open("pgx", s.DbUrl)
+	if err != nil {
+		s.logger.Errorf("%v", err)
+	}
+	defer db.Close()
+
+	rows, err := db.Query("SELECT userID FROM users")
+	if err != nil {
+		s.logger.Errorf("%v", err)
+	}
+	defer rows.Close()
+
+	var userIds []int
+	var id int
+	for rows.Next() {
+		rows.Scan(&id)
+		userIds = append(userIds, id)
+	}
+	return userIds
 }

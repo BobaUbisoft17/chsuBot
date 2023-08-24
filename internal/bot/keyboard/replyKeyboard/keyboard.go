@@ -92,6 +92,28 @@ func GetKeyboardPart(message string, groupNames []string) echotron.ReplyKeyboard
 	return FirstPartGroups(groupNames)
 }
 
+func PostKeyboard() echotron.ReplyKeyboardMarkup {
+	keyboard := [][]echotron.KeyboardButton{
+		add("Текстовый пост"),
+		add("Фото"),
+		add("Смешанный пост"),
+		add("Назад"),
+	}
+	return echotron.ReplyKeyboardMarkup{
+		Keyboard:       keyboard,
+		ResizeKeyboard: true,
+	}
+}
+func BackButton() echotron.ReplyKeyboardMarkup {
+	keyboard := [][]echotron.KeyboardButton{
+		add("Назад"),
+	}
+	return echotron.ReplyKeyboardMarkup{
+		Keyboard:       keyboard,
+		ResizeKeyboard: true,
+	}
+}
+
 func row(buttons ...string) []echotron.KeyboardButton {
 	row := make([]echotron.KeyboardButton, 0, len(buttons))
 	for _, button := range buttons {

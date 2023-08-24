@@ -22,7 +22,9 @@ type userStorage interface {
 	AddUser(userID int64)
 	ChangeUserGroup(userID int64, groupName string)
 	DeleteGroup(userID int64)
+	DeleteUser(userID int64)
 	GetUserGroup(userID int64) int
+	GetUsersId() []int
 	IsUserHasGroup(userID int64) bool
 	IsUserInDB(userID int64) bool
 }
@@ -38,6 +40,8 @@ type bot struct {
 	group     int
 	startDate string
 	endDate   string
+	postText  string
+	postPhoto echotron.InputFile
 	echotron.API
 	chsuAPI api
 	groupDb groupStorage
