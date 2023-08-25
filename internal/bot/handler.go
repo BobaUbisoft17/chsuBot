@@ -5,22 +5,16 @@ import (
 	"strings"
 	"time"
 
+	"slices"
+
 	calendar "github.com/BobaUbisoft17/chsuBot/internal/bot/keyboard/inlineKeyboard"
 	kb "github.com/BobaUbisoft17/chsuBot/internal/bot/keyboard/replyKeyboard"
 	"github.com/NicoNex/echotron/v3"
 )
 
-var inlineKeyboardCallbacks = map[string]bool{
-	"next": true,
-	"back": true,
-	"menu": true,
-}
+var inlineKeyboardCallbacks = []string{"next", "back", "menu"}
 
-var manageGroupKeyboard = map[string]bool{
-	"Назад":     true,
-	"Дальше »":  true,
-	"« Обратно": true,
-}
+var manageGroupKeyboard = []string{"Назад", "Дальше »", "« Обратно"}
 
 func (b *bot) HandleMessage(update *echotron.Update) stateFn {
 	switch update.Message.Text {
@@ -127,7 +121,7 @@ func (b *bot) getAnotherDateSchedule() {
 func (b *bot) getDate(update *echotron.Update) stateFn {
 	callback := update.CallbackQuery
 	switch {
-	case callback != nil && inlineKeyboardCallbacks[strings.Split(callback.Data, " ")[0]]:
+	case callback != nil && slices.Contains(inlineKeyboardCallbacks, strings.Split(callback.Data, " ")[0]):
 		b.manageCalendarKeyboard(callback)
 	case callback != nil && callback.Data != "nil":
 		b.startDate = callback.Data
@@ -147,7 +141,7 @@ func (b *bot) getDate(update *echotron.Update) stateFn {
 
 func (b *bot) getGroup(update *echotron.Update) stateFn {
 	message := update.Message.Text
-	if manageGroupKeyboard[message] {
+	if slices.Contains(manageGroupKeyboard, message) {
 		b.editGroupKeyboard(message)
 	} else if b.groupDb.GroupNameIsCorrect(message) {
 		b.group = b.groupDb.GroupId(message)
@@ -177,7 +171,7 @@ func (b *bot) getDurationSchedule() {
 func (b *bot) getStartDate(update *echotron.Update) stateFn {
 	callback := update.CallbackQuery
 	switch {
-	case callback != nil && inlineKeyboardCallbacks[strings.Split(callback.Data, " ")[0]]:
+	case callback != nil && slices.Contains(inlineKeyboardCallbacks, strings.Split(callback.Data, " ")[0]):
 		b.manageCalendarKeyboard(callback)
 	case callback != nil && callback.Data != "nil":
 		b.startDate = callback.Data
@@ -190,7 +184,7 @@ func (b *bot) getStartDate(update *echotron.Update) stateFn {
 func (b *bot) getSecondDate(update *echotron.Update) stateFn {
 	callback := update.CallbackQuery
 	switch {
-	case callback != nil && inlineKeyboardCallbacks[strings.Split(callback.Data, " ")[0]]:
+	case callback != nil && slices.Contains(inlineKeyboardCallbacks, strings.Split(callback.Data, " ")[0]):
 		b.manageCalendarKeyboard(callback)
 	case callback != nil && callback.Data != "nil":
 		b.endDate = callback.Data
@@ -240,7 +234,7 @@ func (b *bot) memoryGroup() {
 
 func (b *bot) addUserGroup(update *echotron.Update) stateFn {
 	message := update.Message.Text
-	if manageGroupKeyboard[message] {
+	if slices.Contains(manageGroupKeyboard, message) {
 		b.editGroupKeyboard(message)
 	} else if b.groupDb.GroupNameIsCorrect(message) {
 		b.usersDb.ChangeUserGroup(b.chatID, message)
@@ -269,7 +263,7 @@ func (b *bot) changeGroup() {
 
 func (b *bot) updateUserGroup(update *echotron.Update) stateFn {
 	message := update.Message.Text
-	if manageGroupKeyboard[message] {
+	if slices.Contains(manageGroupKeyboard, message) {
 		b.editGroupKeyboard(message)
 	} else if b.groupDb.GroupNameIsCorrect(message) {
 		if b.usersDb.GetUserGroup(b.chatID) != b.groupDb.GroupId(message) {
