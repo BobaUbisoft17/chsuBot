@@ -22,7 +22,7 @@ services:
         environment:
             BOTTOKEN: ${BOTTOKEN}
             DATABASEURL: ${DATABASEURL}
-            ADMIN: 123
+            ADMIN: ${ADMIN}
         depends_on:
             - db
 volumes:
