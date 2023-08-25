@@ -59,7 +59,7 @@ func FirstPartGroups(groupNames []string) echotron.ReplyKeyboardMarkup {
 		add("Дальше »"),
 		add("Назад"),
 	}
-	for i := 0; i < (len(groupNames)+6)/2; i++ {
+	for i := 0; i < len(groupNames)/2; i++ {
 		keyboard = append(keyboard, add(groupNames[i]))
 	}
 	keyboard = append(keyboard, add("Дальше »"))
@@ -75,7 +75,7 @@ func SecondPartGroups(groupNames []string) echotron.ReplyKeyboardMarkup {
 		add("« Обратно"),
 		add("Назад"),
 	}
-	for i := (len(groupNames) + 6) / 2; i < len(groupNames); i++ {
+	for i := len(groupNames) / 2; i < len(groupNames); i++ {
 		keyboard = append(keyboard, add(groupNames[i]))
 	}
 	keyboard = append(keyboard, add("« Обратно"))

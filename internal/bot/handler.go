@@ -268,11 +268,13 @@ func (b *bot) changeGroup() {
 }
 
 func (b *bot) updateUserGroup(update *echotron.Update) stateFn {
-	groupName := update.Message.Text
-	if b.groupDb.GroupNameIsCorrect(groupName) {
-		if b.usersDb.GetUserGroup(b.chatID) != b.groupDb.GroupId(groupName) {
+	message := update.Message.Text
+	if manageGroupKeyboard[message] {
+		b.editGroupKeyboard(message)
+	} else if b.groupDb.GroupNameIsCorrect(message) {
+		if b.usersDb.GetUserGroup(b.chatID) != b.groupDb.GroupId(message) {
 			b.state = b.HandleMessage
-			b.usersDb.ChangeUserGroup(b.chatID, groupName)
+			b.usersDb.ChangeUserGroup(b.chatID, message)
 			b.answer(
 				"Вы успешно изменили группу",
 				kb.GreetingKeyboard(),

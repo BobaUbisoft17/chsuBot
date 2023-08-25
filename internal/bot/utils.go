@@ -173,8 +173,8 @@ func (b *bot) editGroupKeyboard(message string) {
 	if message == "Назад" {
 		b.state = b.HandleMessage
 		b.answer(
-			"Выберите дату",
-			kb.ChooseDateMarkup(),
+			"Возвращаемся в главное меню",
+			kb.GreetingKeyboard(),
 		)
 	} else if message == "Дальше »" || message == "« Обратно" {
 		b.answer(
