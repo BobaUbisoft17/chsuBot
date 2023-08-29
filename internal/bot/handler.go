@@ -233,7 +233,7 @@ func (b *bot) getSecondDate(update *echotron.Update) stateFn {
 		b.manageCalendarKeyboard(callback)
 	case callback != nil && callback.Data != "nil":
 		b.endDate = callback.Data
-		_ = b.orderDateCheck()
+		_ = b.dateSequenceCorrection()
 		if b.validDuration() {
 			if b.usersDb.IsUserHasGroup(b.chatID) {
 				b.closeCalendarMarkup(callback)

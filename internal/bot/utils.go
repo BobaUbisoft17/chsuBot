@@ -206,7 +206,7 @@ func (b *bot) validDuration() bool {
 	return duration <= 31
 }
 
-func (b *bot) orderDateCheck() error {
+func (b *bot) dateSequenceCorrection() error {
 	startDate, err := parseDate(b.startDate)
 	if err != nil {
 		return err
