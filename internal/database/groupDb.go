@@ -14,6 +14,11 @@ type GroupStorage struct {
 	logger *logging.Logger
 }
 
+type GroupInfo struct {
+	GroupName string
+	GroupID   int
+}
+
 func NewGroupStorage(url string, logger *logging.Logger) *GroupStorage {
 	return &GroupStorage{
 		DbUrl:  url,
@@ -205,4 +210,28 @@ func (s *GroupStorage) GetTomorrowSchedule(groupID int) string {
 		s.logger.Error(err)
 	}
 	return ans
+}
+
+func (s *GroupStorage) GroupsStartsWith(firstSymbol string) []GroupInfo {
+	var groups []GroupInfo
+	db, err := sql.Open("pgx", s.DbUrl)
+	if err != nil {
+		s.logger.Error(err)
+	}
+	defer db.Close()
+
+	rows, err := db.Query("SELECT groupName, groupID FROM groups WHERE groupName LIKE $1||'%' ORDER BY groupName", firstSymbol)
+	if err != nil {
+		s.logger.Errorf("%v", err)
+	}
+	defer rows.Close()
+
+	var group GroupInfo
+	for rows.Next() {
+		if err = rows.Scan(&group.GroupName, &group.GroupID); err != nil {
+			s.logger.Errorf("%v", err)
+		}
+		groups = append(groups, group)
+	}
+	return groups
 }

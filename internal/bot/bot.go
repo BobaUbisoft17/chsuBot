@@ -1,6 +1,7 @@
 package bot
 
 import (
+	"github.com/BobaUbisoft17/chsuBot/internal/database"
 	"github.com/BobaUbisoft17/chsuBot/internal/schedule"
 	"github.com/BobaUbisoft17/chsuBot/pkg/logging"
 	"github.com/NicoNex/echotron/v3"
@@ -16,11 +17,12 @@ type groupStorage interface {
 	GetTomorrowSchedule(groupID int) string
 	GroupId(string) int
 	GroupNameIsCorrect(groupName string) bool
+	GroupsStartsWith(firstSymbol string) []database.GroupInfo
 }
 
 type userStorage interface {
 	AddUser(userID int64)
-	ChangeUserGroup(userID int64, groupName string)
+	ChangeUserGroup(userID int64, groupID int)
 	DeleteGroup(userID int64)
 	DeleteUser(userID int64)
 	GetUserGroup(userID int64) int
@@ -34,14 +36,15 @@ type stateFn func(*echotron.Update) stateFn
 type nextFn func()
 
 type bot struct {
-	chatID    int64
-	state     stateFn
-	nextState nextFn
-	group     int
-	startDate string
-	endDate   string
-	postText  string
-	postPhoto echotron.InputFile
+	chatID     int64
+	state      stateFn
+	nextState  nextFn
+	previousFn nextFn
+	group      int
+	startDate  string
+	endDate    string
+	postText   string
+	postPhoto  echotron.InputFile
 	echotron.API
 	chsuAPI api
 	groupDb groupStorage

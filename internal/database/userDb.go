@@ -83,13 +83,12 @@ func (s *UserStorage) IsUserHasGroup(userID int64) bool {
 	return ans
 }
 
-func (s *UserStorage) ChangeUserGroup(userID int64, groupName string) {
+func (s *UserStorage) ChangeUserGroup(userID int64, groupID int) {
 	db, err := sql.Open("pgx", s.DbUrl)
 	if err != nil {
 		s.logger.Error(err)
 	}
 	defer db.Close()
-	groupID := s.gs.GroupId(groupName)
 	_, err = db.Exec("UPDATE users SET groupID=$1 WHERE userID=$2", groupID, userID)
 	if err != nil {
 		s.logger.Error(err)

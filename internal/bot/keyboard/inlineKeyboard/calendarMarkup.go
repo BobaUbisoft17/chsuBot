@@ -59,19 +59,19 @@ func (c *CalendarMarkup) BuildMarkup() echotron.InlineKeyboardMarkup {
 
 func (c *CalendarMarkup) NextMonth() echotron.InlineKeyboardMarkup {
 	nextTime := time.Date(c.Year, time.Month(c.Month+2), 0, 0, 0, 0, 0, time.UTC)
-	*c = CalendarMarkup{
-		Month: int(nextTime.Month()),
-		Year:  nextTime.Year(),
-	}
+	c = New(
+		int(nextTime.Month()),
+		nextTime.Year(),
+	)
 	return c.BuildMarkup()
 }
 
 func (c *CalendarMarkup) PreviousMonth() echotron.InlineKeyboardMarkup {
 	previousTime := time.Date(c.Year, time.Month(c.Month), 0, 0, 0, 0, 0, time.UTC)
-	*c = CalendarMarkup{
-		Month: int(previousTime.Month()),
-		Year:  previousTime.Year(),
-	}
+	c = New(
+		int(previousTime.Month()),
+		previousTime.Year(),
+	)
 	return c.BuildMarkup()
 }
 
@@ -84,7 +84,7 @@ func (c *CalendarMarkup) getRangeMonth() (duration int, firstDay int) {
 func (c *CalendarMarkup) title() {
 	c.keyboard = append(
 		c.keyboard,
-		add_button(fmt.Sprintf("%s %v", c.monthName(), c.Year), "nil"),
+		addButton(fmt.Sprintf("%s %v", c.monthName(), c.Year), "nil"),
 	)
 }
 
@@ -101,7 +101,7 @@ func (c *CalendarMarkup) monthDays() {
 			c.keyboard = append(c.keyboard, row)
 			row = nil
 		}
-		row = append(row, add_button(strconv.Itoa(i), date)...)
+		row = append(row, addButton(strconv.Itoa(i), date)...)
 	}
 	emptyButtons := 7 - len(row)
 	row = append(row, c.addEmptyButtons(emptyButtons)...)
@@ -111,9 +111,9 @@ func (c *CalendarMarkup) monthDays() {
 func (c *CalendarMarkup) addNavigationButtons() {
 	date := fmt.Sprintf("%.2v.%.4v", c.Month, c.Year)
 	navigationButtons := []echotron.InlineKeyboardButton{
-		add_button("<", fmt.Sprintf("back %s", date))[0],
-		add_button("Меню", "menu")[0],
-		add_button(">", fmt.Sprintf("next %s", date))[0],
+		addButton("<", fmt.Sprintf("back %s", date))[0],
+		addButton("Меню", "menu")[0],
+		addButton(">", fmt.Sprintf("next %s", date))[0],
 	}
 	c.keyboard = append(c.keyboard, navigationButtons)
 }
@@ -126,21 +126,8 @@ func (c *CalendarMarkup) addEmptyButtons(emptyButtons int) (emptyInlineButtons [
 	for i := 0; i < emptyButtons; i++ {
 		emptyInlineButtons = append(
 			emptyInlineButtons,
-			add_button(" ", "nil")...,
+			addButton(" ", "nil")...,
 		)
 	}
 	return
-}
-
-func rowButtons(buttons []string) (buttonLine []echotron.InlineKeyboardButton) {
-	for _, button := range buttons {
-		buttonLine = append(buttonLine, add_button(button, "nil")...)
-	}
-	return
-}
-
-func add_button(text string, callback string) (inlineButton []echotron.InlineKeyboardButton) {
-	return []echotron.InlineKeyboardButton{
-		{Text: text, CallbackData: callback},
-	}
 }

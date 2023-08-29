@@ -2,19 +2,20 @@ package bot
 
 import (
 	"fmt"
+	"strconv"
 	"strings"
 	"time"
 
 	"slices"
 
-	calendar "github.com/BobaUbisoft17/chsuBot/internal/bot/keyboard/inlineKeyboard"
+	ikb "github.com/BobaUbisoft17/chsuBot/internal/bot/keyboard/inlineKeyboard"
 	kb "github.com/BobaUbisoft17/chsuBot/internal/bot/keyboard/replyKeyboard"
 	"github.com/NicoNex/echotron/v3"
 )
 
-var inlineKeyboardCallbacks = []string{"next", "back", "menu"}
+var calendarKeyboardCallbacks = []string{"next", "back", "menu"}
 
-var manageGroupKeyboard = []string{"Назад", "Дальше »", "« Обратно"}
+var groupKeyboardCallbacks = []string{"next", "previous", "back"}
 
 func (b *bot) HandleMessage(update *echotron.Update) stateFn {
 	switch update.Message.Text {
@@ -76,14 +77,16 @@ func (b *bot) getTodaySchedule() {
 		} else {
 			groupID = b.usersDb.GetUserGroup(b.chatID)
 		}
+		b.state = b.HandleMessage
 		b.answer(
 			b.groupDb.GetTodaySchedule(groupID),
 			kb.ChooseDateMarkup(),
 		)
 	} else {
-		b.state = b.getGroup
+		b.state = b.chooseUniversity
 		b.nextState = b.getTodaySchedule
-		b.answer("Введите название вашей группы", kb.FirstPartGroups(b.groupDb.GetGroupNames()))
+		b.previousFn = b.chooseDate
+		b.answer("Введите название вашей группы", ikb.FirstSymbolKeyboard())
 	}
 }
 
@@ -95,23 +98,27 @@ func (b *bot) getTomorrowSchedule() {
 		} else {
 			groupID = b.usersDb.GetUserGroup(b.chatID)
 		}
+		b.state = b.HandleMessage
 		b.answer(
 			b.groupDb.GetTomorrowSchedule(groupID),
 			kb.ChooseDateMarkup(),
 		)
 	} else {
 		b.nextState = b.getTomorrowSchedule
-		b.state = b.getGroup
-		b.answer("Введите название вашей группы", kb.FirstPartGroups(b.groupDb.GetGroupNames()))
+		b.previousFn = b.chooseDate
+		b.state = b.chooseUniversity
+		b.answer("Введите название вашей группы", ikb.FirstSymbolKeyboard())
 	}
 }
 
 func (b *bot) getAnotherDateSchedule() {
 	b.state = b.getDate
+	b.previousFn = b.chooseDate
 	timeNow := time.Now()
+	b.endDate = ""
 	b.answer(
 		"Выберите день:",
-		calendar.New(
+		ikb.New(
 			int(timeNow.Month()),
 			timeNow.Year(),
 		).BuildMarkup(),
@@ -121,47 +128,85 @@ func (b *bot) getAnotherDateSchedule() {
 func (b *bot) getDate(update *echotron.Update) stateFn {
 	callback := update.CallbackQuery
 	switch {
-	case callback != nil && slices.Contains(inlineKeyboardCallbacks, strings.Split(callback.Data, " ")[0]):
+	case callback != nil && slices.Contains(calendarKeyboardCallbacks, strings.Split(callback.Data, " ")[0]):
 		b.manageCalendarKeyboard(callback)
 	case callback != nil && callback.Data != "nil":
 		b.startDate = callback.Data
-		b.closeCalendarMarkup(callback)
 		if b.usersDb.IsUserHasGroup(b.chatID) {
+			b.closeCalendarMarkup(callback)
 			b.group = b.usersDb.GetUserGroup(b.chatID)
 			b.sendSchedule()
 			b.state = b.HandleMessage
 		} else {
-			b.state = b.getGroup
+			b.state = b.chooseUniversity
 			b.nextState = b.sendSchedule
-			b.getGroupKeyboard()
+			message := echotron.NewMessageID(b.chatID, callback.Message.ID)
+			opts := echotron.MessageTextOptions{ReplyMarkup: ikb.FirstSymbolKeyboard()}
+			b.EditMessageText("Выберите первую цифру вашей группы", message, &opts)
 		}
 	}
 	return b.state
 }
 
-func (b *bot) getGroup(update *echotron.Update) stateFn {
-	message := update.Message.Text
-	if slices.Contains(manageGroupKeyboard, message) {
-		b.editGroupKeyboard(message)
-	} else if b.groupDb.GroupNameIsCorrect(message) {
-		b.group = b.groupDb.GroupId(message)
-		b.nextState()
+func (b *bot) chooseUniversity(update *echotron.Update) stateFn {
+	callback := update.CallbackQuery
+	switch {
+	case callback != nil && callback.Data == "back":
+		b.EditMessageText("Вложение удалено", echotron.NewMessageID(b.chatID, callback.Message.ID), nil)
+		b.previousFn()
 		b.state = b.HandleMessage
-	} else {
-		b.answer(
-			"Вы ввели некорректные данные, попробуйте ещё раз, пожалуйста",
+	case callback != nil:
+		b.state = b.getGroup
+		message := echotron.NewMessageID(b.chatID, callback.Message.ID)
+		opts := echotron.MessageTextOptions{
+			ReplyMarkup: ikb.CreateGroupKeyboard(b.groupDb.GroupsStartsWith(callback.Data), callback.Data, 1),
+		}
+		b.EditMessageText("Выберите вашу группу", message, &opts)
+	}
+	return b.state
+}
+
+func (b *bot) getGroup(update *echotron.Update) stateFn {
+	callback := update.CallbackQuery
+	switch {
+	case callback != nil && callback.Data == "back":
+		opts := echotron.MessageTextOptions{
+			ReplyMarkup: ikb.FirstSymbolKeyboard(),
+		}
+		b.EditMessageText("Выберите первую цифру вашей группы", echotron.NewMessageID(b.chatID, callback.Message.ID), &opts)
+		b.state = b.chooseUniversity
+	case callback != nil && slices.Contains(groupKeyboardCallbacks, strings.Split(callback.Data, " ")[0]):
+		splitData := strings.Split(callback.Data, " ")
+		university, stringPart := splitData[1], splitData[2]
+		part, _ := strconv.Atoi(stringPart)
+		message := echotron.NewMessageID(b.chatID, callback.Message.ID)
+		groups := b.groupDb.GroupsStartsWith(university)
+		opts := echotron.MessageReplyMarkup{ReplyMarkup: ikb.CreateGroupKeyboard(
+			groups,
+			university,
+			part,
+		)}
+		b.EditMessageReplyMarkup(message, &opts)
+	case callback != nil:
+		message := echotron.NewMessageID(b.chatID, callback.Message.ID)
+		b.EditMessageText(
+			"Вложение удалено",
+			message,
 			nil,
 		)
+		b.group, _ = strconv.Atoi(callback.Data)
+		b.nextState()
 	}
 	return b.state
 }
 
 func (b *bot) getDurationSchedule() {
 	b.state = b.getStartDate
+	b.previousFn = b.chooseDate
 	timeNow := time.Now()
 	b.answer(
 		"Выберите первый день диапазона:",
-		calendar.New(
+		ikb.New(
 			int(timeNow.Month()),
 			timeNow.Year(),
 		).BuildMarkup(),
@@ -171,7 +216,7 @@ func (b *bot) getDurationSchedule() {
 func (b *bot) getStartDate(update *echotron.Update) stateFn {
 	callback := update.CallbackQuery
 	switch {
-	case callback != nil && slices.Contains(inlineKeyboardCallbacks, strings.Split(callback.Data, " ")[0]):
+	case callback != nil && slices.Contains(calendarKeyboardCallbacks, strings.Split(callback.Data, " ")[0]):
 		b.manageCalendarKeyboard(callback)
 	case callback != nil && callback.Data != "nil":
 		b.startDate = callback.Data
@@ -184,21 +229,23 @@ func (b *bot) getStartDate(update *echotron.Update) stateFn {
 func (b *bot) getSecondDate(update *echotron.Update) stateFn {
 	callback := update.CallbackQuery
 	switch {
-	case callback != nil && slices.Contains(inlineKeyboardCallbacks, strings.Split(callback.Data, " ")[0]):
+	case callback != nil && slices.Contains(calendarKeyboardCallbacks, strings.Split(callback.Data, " ")[0]):
 		b.manageCalendarKeyboard(callback)
 	case callback != nil && callback.Data != "nil":
 		b.endDate = callback.Data
 		_ = b.orderDateCheck()
 		if b.validDuration() {
-			b.closeCalendarMarkup(callback)
 			if b.usersDb.IsUserHasGroup(b.chatID) {
+				b.closeCalendarMarkup(callback)
 				b.group = b.usersDb.GetUserGroup(b.chatID)
 				b.sendSchedule()
 				b.state = b.HandleMessage
 			} else {
-				b.state = b.getGroup
+				b.state = b.chooseUniversity
 				b.nextState = b.sendSchedule
-				b.getGroupKeyboard()
+				message := echotron.NewMessageID(b.chatID, callback.Message.ID)
+				opts := echotron.MessageTextOptions{ReplyMarkup: ikb.FirstSymbolKeyboard()}
+				b.EditMessageText("Выберите первую цифру вашей группы", message, &opts)
 			}
 		} else {
 			b.answer(
@@ -225,67 +272,51 @@ func (b *bot) getSettings() {
 
 func (b *bot) memoryGroup() {
 	if !b.usersDb.IsUserHasGroup(b.chatID) {
-		b.state = b.addUserGroup
-		b.getGroupKeyboard()
+		b.state = b.chooseUniversity
+		b.nextState = b.addUserGroup
+		b.previousFn = b.getSettings
+		b.getFirstSymbolKeyboard()
 	} else {
 		b.answer("Не ломайте меня, пожалуйста🙏", nil)
 	}
 }
 
-func (b *bot) addUserGroup(update *echotron.Update) stateFn {
-	message := update.Message.Text
-	if slices.Contains(manageGroupKeyboard, message) {
-		b.editGroupKeyboard(message)
-	} else if b.groupDb.GroupNameIsCorrect(message) {
-		b.usersDb.ChangeUserGroup(b.chatID, message)
-		b.state = b.HandleMessage
-		b.answer(
-			"Я вас запомнил, теперь вам не нужно выбирать группу",
-			kb.GreetingKeyboard(),
-		)
-	} else {
-		b.answer(
-			"Вы ввели некорректные данные, попробуйте ещё раз, пожалуйста",
-			nil,
-		)
-	}
-	return b.state
+func (b *bot) addUserGroup() {
+	b.usersDb.ChangeUserGroup(b.chatID, b.group)
+	b.state = b.HandleMessage
+	b.group = 0
+	b.answer(
+		"Я вас запомнил, теперь вам не нужно выбирать группу",
+		kb.GreetingKeyboard(),
+	)
 }
 
 func (b *bot) changeGroup() {
 	if b.usersDb.IsUserHasGroup(b.chatID) {
-		b.state = b.updateUserGroup
-		b.getGroupKeyboard()
+		b.state = b.chooseUniversity
+		b.nextState = b.updateUserGroup
+		b.previousFn = b.getSettings
+		b.getFirstSymbolKeyboard()
 	} else {
 		b.answer("Не ломайте меня, пожалуйста🙏", nil)
 	}
 }
 
-func (b *bot) updateUserGroup(update *echotron.Update) stateFn {
-	message := update.Message.Text
-	if slices.Contains(manageGroupKeyboard, message) {
-		b.editGroupKeyboard(message)
-	} else if b.groupDb.GroupNameIsCorrect(message) {
-		if b.usersDb.GetUserGroup(b.chatID) != b.groupDb.GroupId(message) {
-			b.state = b.HandleMessage
-			b.usersDb.ChangeUserGroup(b.chatID, message)
-			b.answer(
-				"Вы успешно изменили группу",
-				kb.GreetingKeyboard(),
-			)
-		} else {
-			b.answer(
-				"Эта группа уже выбрана вами",
-				nil,
-			)
-		}
+func (b *bot) updateUserGroup() {
+	b.state = b.HandleMessage
+	if b.usersDb.GetUserGroup(b.chatID) != b.group {
+		b.usersDb.ChangeUserGroup(b.chatID, b.group)
+		b.group = 0
+		b.answer(
+			"Вы успешно изменили группу",
+			kb.GreetingKeyboard(),
+		)
 	} else {
 		b.answer(
-			"Вы ввели некорректные данные, попробуйте ещё раз, пожалуйста",
+			"Эта группа уже выбрана вами",
 			nil,
 		)
 	}
-	return b.state
 }
 
 func (b *bot) deleteGroupInfo() {

@@ -7,7 +7,7 @@ import (
 	"sync"
 	"time"
 
-	calendar "github.com/BobaUbisoft17/chsuBot/internal/bot/keyboard/inlineKeyboard"
+	ikb "github.com/BobaUbisoft17/chsuBot/internal/bot/keyboard/inlineKeyboard"
 	kb "github.com/BobaUbisoft17/chsuBot/internal/bot/keyboard/replyKeyboard"
 	"github.com/BobaUbisoft17/chsuBot/internal/schedule"
 	"github.com/BobaUbisoft17/chsuBot/pkg"
@@ -80,6 +80,7 @@ func (b *bot) sendPostWithImage() {
 }
 
 func (b *bot) sendSchedule() {
+	b.state = b.HandleMessage
 	if b.endDate == "" {
 		b.endDate = b.startDate
 	}
@@ -139,9 +140,9 @@ func (b *bot) changeMonth(callback *echotron.CallbackQuery) {
 	}
 	var markup echotron.InlineKeyboardMarkup
 	if strings.Contains(callback.Data, "next") {
-		markup = calendar.New(month, year).NextMonth()
+		markup = ikb.New(month, year).NextMonth()
 	} else {
-		markup = calendar.New(month, year).PreviousMonth()
+		markup = ikb.New(month, year).PreviousMonth()
 	}
 	message := echotron.NewMessageID(b.chatID, callback.Message.ID)
 	opts := echotron.MessageReplyMarkup{ReplyMarkup: markup}
@@ -153,10 +154,10 @@ func (b *bot) closeCalendarMarkup(callback *echotron.CallbackQuery) {
 	b.EditMessageText("Вложение удалено", message, nil)
 }
 
-func (b *bot) getGroupKeyboard() {
-	replyMarkup := kb.FirstPartGroups(b.groupDb.GetGroupNames())
+func (b *bot) getFirstSymbolKeyboard() {
+	replyMarkup := ikb.FirstSymbolKeyboard()
 	messageOptions := getReplyMarkupMessageOptions(replyMarkup)
-	b.SendMessage("Введите назвние вашей группы", b.chatID, &messageOptions)
+	b.SendMessage("Выберите первую цифру номера вашей группы", b.chatID, &messageOptions)
 }
 
 func (b *bot) manageCalendarKeyboard(callback *echotron.CallbackQuery) {
@@ -169,20 +170,20 @@ func (b *bot) manageCalendarKeyboard(callback *echotron.CallbackQuery) {
 	}
 }
 
-func (b *bot) editGroupKeyboard(message string) {
-	if message == "Назад" {
-		b.state = b.HandleMessage
-		b.answer(
-			"Возвращаемся в главное меню",
-			kb.GreetingKeyboard(),
-		)
-	} else if message == "Дальше »" || message == "« Обратно" {
-		b.answer(
-			"Меняем клавиатуру",
-			kb.GetKeyboardPart(message, b.groupDb.GetGroupNames()),
-		)
-	}
-}
+//func (b *bot) editGroupKeyboard(message string) {
+//	if message == "Назад" {
+//		b.state = b.HandleMessage
+//		b.answer(
+//			"Возвращаемся в главное меню",
+//			kb.GreetingKeyboard(),
+//		)
+//	} else if message == "Дальше »" || message == "« Обратно" {
+//		b.answer(
+//			"Меняем клавиатуру",
+//			kb.GetKeyboardPart(message, b.groupDb.GetGroupNames()),
+//		)
+//	}
+//}
 
 func sortScheduleByDate(timetable []schedule.Lecture) (map[int][]schedule.Lecture, error) {
 	scheduleByDays := make(map[int][]schedule.Lecture)
