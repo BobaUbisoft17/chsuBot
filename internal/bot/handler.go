@@ -38,7 +38,7 @@ func (b *bot) HandleMessage(update *echotron.Update) stateFn {
 	case "Настройки":
 		b.getSettings()
 	case "Запомнить группу":
-		b.memoryGroup()
+		b.rememberGroup()
 	case "Изменить группу":
 		b.changeGroup()
 	case "Удалить данные о группе":
@@ -270,7 +270,7 @@ func (b *bot) getSettings() {
 	b.answer("Переходим в меню настроек", replyMarkup)
 }
 
-func (b *bot) memoryGroup() {
+func (b *bot) rememberGroup() {
 	if !b.usersDb.IsUserHasGroup(b.chatID) {
 		b.state = b.chooseUniversity
 		b.nextFn = b.addUserGroup
