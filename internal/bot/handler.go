@@ -84,7 +84,7 @@ func (b *bot) getTodaySchedule() {
 		)
 	} else {
 		b.state = b.chooseUniversity
-		b.nextState = b.getTodaySchedule
+		b.nextFn = b.getTodaySchedule
 		b.previousFn = b.chooseDate
 		b.answer("Введите название вашей группы", ikb.FirstSymbolKeyboard())
 	}
@@ -104,7 +104,7 @@ func (b *bot) getTomorrowSchedule() {
 			kb.ChooseDateMarkup(),
 		)
 	} else {
-		b.nextState = b.getTomorrowSchedule
+		b.nextFn = b.getTomorrowSchedule
 		b.previousFn = b.chooseDate
 		b.state = b.chooseUniversity
 		b.answer("Введите название вашей группы", ikb.FirstSymbolKeyboard())
@@ -139,7 +139,7 @@ func (b *bot) getDate(update *echotron.Update) stateFn {
 			b.state = b.HandleMessage
 		} else {
 			b.state = b.chooseUniversity
-			b.nextState = b.sendSchedule
+			b.nextFn = b.sendSchedule
 			message := echotron.NewMessageID(b.chatID, callback.Message.ID)
 			opts := echotron.MessageTextOptions{ReplyMarkup: ikb.FirstSymbolKeyboard()}
 			b.EditMessageText("Выберите первую цифру вашей группы", message, &opts)
@@ -195,7 +195,7 @@ func (b *bot) getGroup(update *echotron.Update) stateFn {
 			nil,
 		)
 		b.group, _ = strconv.Atoi(callback.Data)
-		b.nextState()
+		b.nextFn()
 	}
 	return b.state
 }
@@ -242,7 +242,7 @@ func (b *bot) getSecondDate(update *echotron.Update) stateFn {
 				b.state = b.HandleMessage
 			} else {
 				b.state = b.chooseUniversity
-				b.nextState = b.sendSchedule
+				b.nextFn = b.sendSchedule
 				message := echotron.NewMessageID(b.chatID, callback.Message.ID)
 				opts := echotron.MessageTextOptions{ReplyMarkup: ikb.FirstSymbolKeyboard()}
 				b.EditMessageText("Выберите первую цифру вашей группы", message, &opts)
@@ -273,7 +273,7 @@ func (b *bot) getSettings() {
 func (b *bot) memoryGroup() {
 	if !b.usersDb.IsUserHasGroup(b.chatID) {
 		b.state = b.chooseUniversity
-		b.nextState = b.addUserGroup
+		b.nextFn = b.addUserGroup
 		b.previousFn = b.getSettings
 		b.getFirstSymbolKeyboard()
 	} else {
@@ -294,7 +294,7 @@ func (b *bot) addUserGroup() {
 func (b *bot) changeGroup() {
 	if b.usersDb.IsUserHasGroup(b.chatID) {
 		b.state = b.chooseUniversity
-		b.nextState = b.updateUserGroup
+		b.nextFn = b.updateUserGroup
 		b.previousFn = b.getSettings
 		b.getFirstSymbolKeyboard()
 	} else {

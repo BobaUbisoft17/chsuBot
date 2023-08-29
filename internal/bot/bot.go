@@ -38,7 +38,7 @@ type nextFn func()
 type bot struct {
 	chatID     int64
 	state      stateFn
-	nextState  nextFn
+	nextFn     nextFn
 	previousFn nextFn
 	group      int
 	startDate  string

@@ -27,12 +27,12 @@ func (b *bot) choosePostType(update *echotron.Update) stateFn {
 	switch update.Message.Text {
 	case "Текстовый пост":
 		b.prepareGetPostText()
-		b.nextState = b.sendTextPost
+		b.nextFn = b.sendTextPost
 	case "Фото":
 		b.prepareGetPostPhoto()
 	case "Смешанный пост":
 		b.prepareGetPostText()
-		b.nextState = b.prepareGetPostPhoto
+		b.nextFn = b.prepareGetPostPhoto
 	case "Назад":
 		b.state = b.HandleMessage
 		b.answer(
@@ -55,7 +55,7 @@ func (b *bot) getPostText(update *echotron.Update) stateFn {
 	message := update.Message.Text
 	if message != "Назад" {
 		b.postText = message
-		b.nextState()
+		b.nextFn()
 	} else {
 		b.createPost()
 	}
@@ -64,7 +64,7 @@ func (b *bot) getPostText(update *echotron.Update) stateFn {
 
 func (b *bot) prepareGetPostPhoto() {
 	b.state = b.getPostPhoto
-	b.nextState = b.sendPostWithImage
+	b.nextFn = b.sendPostWithImage
 	b.answer(
 		"Отправьте мне фото для поста",
 		kb.BackButton(),
