@@ -56,7 +56,7 @@ func (b *bot) sendTextPost() {
 	b.answer("Все пользователи оповещены", kb.GreetingKeyboard())
 }
 
-func (b *bot) sendPostWithImage() {
+func (b *bot) sendPostWithImage(postPhoto echotron.InputFile) {
 	var wg sync.WaitGroup
 	userIDs := b.usersDb.GetUsersId()
 	photoOpts := echotron.PhotoOptions{
@@ -72,10 +72,10 @@ func (b *bot) sendPostWithImage() {
 			} else {
 				b.logger.Errorf("%v", err)
 			}
-		}(int64(userID), b.postPhoto, photoOpts)
+		}(int64(userID), postPhoto, photoOpts)
 	}
 	wg.Wait()
-	b.postText, b.postPhoto = "", echotron.InputFile{}
+	b.postText = ""
 	b.answer("Все пользователи оповещены", kb.GreetingKeyboard())
 }
 

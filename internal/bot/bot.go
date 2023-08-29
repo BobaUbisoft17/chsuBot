@@ -44,7 +44,6 @@ type bot struct {
 	startDate  string
 	endDate    string
 	postText   string
-	postPhoto  echotron.InputFile
 	echotron.API
 	chsuAPI api
 	groupDb groupStorage

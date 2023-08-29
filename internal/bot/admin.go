@@ -64,7 +64,6 @@ func (b *bot) getPostText(update *echotron.Update) stateFn {
 
 func (b *bot) prepareGetPostPhoto() {
 	b.state = b.getPostPhoto
-	b.nextFn = b.sendPostWithImage
 	b.answer(
 		"Отправьте мне фото для поста",
 		kb.BackButton(),
@@ -74,8 +73,8 @@ func (b *bot) prepareGetPostPhoto() {
 func (b *bot) getPostPhoto(update *echotron.Update) stateFn {
 	if update.Message.Text != "Назад" {
 		photo := update.Message.Photo[0].FileID
-		b.postPhoto = echotron.NewInputFileID(photo)
-		b.sendPostWithImage()
+		postPhoto := echotron.NewInputFileID(photo)
+		b.sendPostWithImage(postPhoto)
 	} else {
 		b.createPost()
 	}
