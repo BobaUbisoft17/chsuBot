@@ -170,21 +170,6 @@ func (b *bot) manageCalendarKeyboard(callback *echotron.CallbackQuery) {
 	}
 }
 
-//func (b *bot) editGroupKeyboard(message string) {
-//	if message == "Назад" {
-//		b.state = b.HandleMessage
-//		b.answer(
-//			"Возвращаемся в главное меню",
-//			kb.GreetingKeyboard(),
-//		)
-//	} else if message == "Дальше »" || message == "« Обратно" {
-//		b.answer(
-//			"Меняем клавиатуру",
-//			kb.GetKeyboardPart(message, b.groupDb.GetGroupNames()),
-//		)
-//	}
-//}
-
 func sortScheduleByDate(timetable []schedule.Lecture) (map[int][]schedule.Lecture, error) {
 	scheduleByDays := make(map[int][]schedule.Lecture)
 	for _, lecture := range timetable {
