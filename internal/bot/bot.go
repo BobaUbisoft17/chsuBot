@@ -1,6 +1,8 @@
 package bot
 
 import (
+	"time"
+
 	"github.com/BobaUbisoft17/chsuBot/internal/database"
 	"github.com/BobaUbisoft17/chsuBot/internal/schedule"
 	"github.com/BobaUbisoft17/chsuBot/pkg/logging"
@@ -41,8 +43,8 @@ type bot struct {
 	nextFn     nextFn
 	previousFn nextFn
 	group      int
-	startDate  string
-	endDate    string
+	startDate  time.Time
+	endDate    time.Time
 	postText   string
 	echotron.API
 	chsuAPI api

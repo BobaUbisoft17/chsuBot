@@ -115,7 +115,7 @@ func (b *bot) getAnotherDateSchedule() {
 	b.state = b.getDate
 	b.previousFn = b.chooseDate
 	timeNow := time.Now()
-	b.endDate = ""
+	b.endDate = time.Time{}
 	b.answer(
 		"Выберите день:",
 		ikb.New(
@@ -131,7 +131,7 @@ func (b *bot) getDate(update *echotron.Update) stateFn {
 	case callback != nil && slices.Contains(calendarKeyboardCallbacks, strings.Split(callback.Data, " ")[0]):
 		b.manageCalendarKeyboard(callback)
 	case callback != nil && callback.Data != "nil":
-		b.startDate = callback.Data
+		b.startDate, _ = parseDate(callback.Data)
 		if b.usersDb.IsUserHasGroup(b.chatID) {
 			b.closeCalendarMarkup(callback)
 			b.group = b.usersDb.GetUserGroup(b.chatID)
@@ -219,7 +219,7 @@ func (b *bot) getStartDate(update *echotron.Update) stateFn {
 	case callback != nil && slices.Contains(calendarKeyboardCallbacks, strings.Split(callback.Data, " ")[0]):
 		b.manageCalendarKeyboard(callback)
 	case callback != nil && callback.Data != "nil":
-		b.startDate = callback.Data
+		b.startDate, _ = parseDate(callback.Data)
 		b.state = b.getSecondDate
 		b.answer("Выберите последний день диапазона (выберите день на клавиатуре сверху)", nil)
 	}
@@ -232,8 +232,8 @@ func (b *bot) getSecondDate(update *echotron.Update) stateFn {
 	case callback != nil && slices.Contains(calendarKeyboardCallbacks, strings.Split(callback.Data, " ")[0]):
 		b.manageCalendarKeyboard(callback)
 	case callback != nil && callback.Data != "nil":
-		b.endDate = callback.Data
-		_ = b.dateSequenceCorrection()
+		b.endDate, _ = parseDate(callback.Data)
+		b.dateSequenceCorrection()
 		if b.validDuration() {
 			if b.usersDb.IsUserHasGroup(b.chatID) {
 				b.closeCalendarMarkup(callback)

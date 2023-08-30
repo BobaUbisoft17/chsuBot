@@ -81,11 +81,11 @@ func (b *bot) sendPostWithImage(postPhoto echotron.InputFile) {
 
 func (b *bot) sendSchedule() {
 	b.state = b.HandleMessage
-	if b.endDate == "" {
+	if b.endDate.IsZero() {
 		b.endDate = b.startDate
 	}
 
-	unParseSchedule, err := b.chsuAPI.One(b.startDate, b.endDate, b.group)
+	unParseSchedule, err := b.chsuAPI.One(b.startDate.Format("02.01.2006"), b.endDate.Format("02.01.2006"), b.group)
 	if err != nil {
 		b.logger.Errorf("%v", err)
 	}
@@ -103,7 +103,7 @@ func (b *bot) sendSchedule() {
 			b.answer(schedule[i], nil)
 		}
 	}
-	b.startDate, b.endDate, b.group = "", "", 0
+	b.startDate, b.endDate, b.group = time.Time{}, time.Time{}, 0
 }
 
 func buildSchedule(schedules []schedule.Lecture) ([]string, error) {
@@ -200,25 +200,12 @@ func parseDate(date string) (time.Time, error) {
 }
 
 func (b *bot) validDuration() bool {
-	startDate, _ := parseDate(b.startDate)
-	endDate, _ := parseDate(b.endDate)
-	duration := endDate.Sub(startDate).Hours() / 24
+	duration := b.endDate.Sub(b.startDate).Hours() / 24
 	return duration <= 31
 }
 
-func (b *bot) dateSequenceCorrection() error {
-	startDate, err := parseDate(b.startDate)
-	if err != nil {
-		return err
-	}
-
-	endDate, err := parseDate(b.endDate)
-	if err != nil {
-		return err
-	}
-
-	if startDate.After(endDate) {
+func (b *bot) dateSequenceCorrection() {
+	if b.startDate.After(b.endDate) {
 		b.startDate, b.endDate = b.endDate, b.startDate
 	}
-	return nil
 }
