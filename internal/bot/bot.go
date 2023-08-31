@@ -51,16 +51,18 @@ type bot struct {
 	groupDb groupStorage
 	logger  *logging.Logger
 	token   string
+	adminId int
 	usersDb userStorage
 }
 
-func New(api api, groupDb groupStorage, userDb userStorage, logger *logging.Logger, token string) *bot {
+func New(api api, groupDb groupStorage, userDb userStorage, logger *logging.Logger, token string, adminId int) *bot {
 	return &bot{
 		chsuAPI: api,
 		groupDb: groupDb,
 		usersDb: userDb,
 		logger:  logger,
 		token:   token,
+		adminId: adminId,
 	}
 }
 

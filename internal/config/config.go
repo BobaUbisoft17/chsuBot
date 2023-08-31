@@ -10,7 +10,7 @@ import (
 type Config struct {
 	TelegramBotToken string `env:"BOTTOKEN" env-required:true`
 	DatabaseURL      string `env:"DATABASEURL" env-default:"postgres://postgres:postgres@localhost:5432/chsuBot?sslmode=disable"`
-	Admin            int    `env:"ADMIN"`
+	AdminId          int    `env:"ADMIN" env-required:true`
 }
 
 var (
