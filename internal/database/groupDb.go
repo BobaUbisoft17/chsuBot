@@ -154,11 +154,11 @@ func (s *GroupStorage) UpdateSchedule(todaySchedule, tomorrowSchedule []schedule
 	}
 }
 
-func (s *GroupStorage) UnusedID(IDs []int) []int {
+func (s *GroupStorage) UnusedID(ids []int) []int {
 	unusedKeys := []int{}
 	usedKeys := make(map[int]bool)
-	for _, ID := range IDs {
-		usedKeys[ID] = true
+	for _, id := range ids {
+		usedKeys[id] = true
 	}
 	db, err := sql.Open("pgx", s.DbUrl)
 	if err != nil {
@@ -170,11 +170,11 @@ func (s *GroupStorage) UnusedID(IDs []int) []int {
 		s.logger.Error(err)
 	}
 	defer rows.Close()
-	var ID int
+	var id int
 	for rows.Next() {
-		rows.Scan(&ID)
-		if _, ok := usedKeys[ID]; !ok {
-			unusedKeys = append(unusedKeys, ID)
+		rows.Scan(&id)
+		if _, ok := usedKeys[id]; !ok {
+			unusedKeys = append(unusedKeys, id)
 		}
 	}
 	return unusedKeys
