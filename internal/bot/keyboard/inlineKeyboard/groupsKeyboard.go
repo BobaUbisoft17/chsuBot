@@ -63,7 +63,7 @@ func CreateGroupKeyboard(groups []database.GroupInfo, university string, part in
 			addButton("Назад", "back")[0],
 			addButton(">", fmt.Sprintf("next %s 2", university))[0],
 		})
-	} else if part*18 > len(groups) {
+	} else if part*18 >= len(groups) {
 		keyboard = getGroupButtons(groups[(part-1)*18:])
 		keyboard = append(keyboard, []echotron.InlineKeyboardButton{
 			addButton("<", fmt.Sprintf("previous %s %d", university, part-1))[0],
