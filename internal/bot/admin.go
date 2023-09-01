@@ -1,16 +1,12 @@
 package bot
 
 import (
-	"os"
-	"strconv"
-
 	kb "github.com/BobaUbisoft17/chsuBot/internal/bot/keyboard/replyKeyboard"
 	"github.com/NicoNex/echotron/v3"
 )
 
 func (b *bot) IsAdmin(nextFunc nextFn) {
-	admin, _ := strconv.Atoi(os.Getenv("ADMIN"))
-	if int(b.chatID) == admin {
+	if int(b.chatID) == b.adminId {
 		nextFunc()
 	}
 }
