@@ -18,31 +18,33 @@ var calendarKeyboardCallbacks = []string{"next", "back", "menu"}
 var groupKeyboardCallbacks = []string{"next", "previous", "back"}
 
 func (b *bot) HandleMessage(update *echotron.Update) stateFn {
-	switch update.Message.Text {
-	case "/start":
-		b.sendWelcome()
-	case "Сделать запись":
-		b.IsAdmin(b.createPost)
-	case "Узнать расписание":
-		b.chooseDate()
-	case "Назад":
-		b.back()
-	case "На сегодня":
-		b.getTodaySchedule()
-	case "На завтра":
-		b.getTomorrowSchedule()
-	case "Выбрать другой день":
-		b.getAnotherDateSchedule()
-	case "Выбрать диапазон":
-		b.getDurationSchedule()
-	case "Настройки":
-		b.getSettings()
-	case "Запомнить группу":
-		b.rememberGroup()
-	case "Изменить группу":
-		b.changeGroup()
-	case "Удалить данные о группе":
-		b.deleteGroupInfo()
+	if update.Message != nil {
+		switch update.Message.Text {
+		case "/start":
+			b.sendWelcome()
+		case "Сделать запись":
+			b.IsAdmin(b.createPost)
+		case "Узнать расписание":
+			b.chooseDate()
+		case "Назад":
+			b.back()
+		case "На сегодня":
+			b.getTodaySchedule()
+		case "На завтра":
+			b.getTomorrowSchedule()
+		case "Выбрать другой день":
+			b.getAnotherDateSchedule()
+		case "Выбрать диапазон":
+			b.getDurationSchedule()
+		case "Настройки":
+			b.getSettings()
+		case "Запомнить группу":
+			b.rememberGroup()
+		case "Изменить группу":
+			b.changeGroup()
+		case "Удалить данные о группе":
+			b.deleteGroupInfo()
+		}
 	}
 	return b.state
 }
@@ -127,22 +129,25 @@ func (b *bot) getAnotherDateSchedule() {
 
 func (b *bot) getDate(update *echotron.Update) stateFn {
 	callback := update.CallbackQuery
-	switch {
-	case callback != nil && slices.Contains(calendarKeyboardCallbacks, strings.Split(callback.Data, " ")[0]):
-		b.manageCalendarKeyboard(callback)
-	case callback != nil && callback.Data != "nil":
-		b.startDate, _ = parseDate(callback.Data)
-		if b.usersDb.IsUserHasGroup(b.chatID) {
-			b.closeCalendarMarkup(callback)
-			b.group = b.usersDb.GetUserGroup(b.chatID)
-			b.sendSchedule()
-			b.state = b.HandleMessage
-		} else {
-			b.state = b.chooseUniversity
-			b.nextFn = b.sendSchedule
-			message := echotron.NewMessageID(b.chatID, callback.Message.ID)
-			opts := echotron.MessageTextOptions{ReplyMarkup: ikb.FirstSymbolKeyboard()}
-			b.EditMessageText("Выберите первую цифру вашей группы", message, &opts)
+	if callback != nil {
+		command := strings.Split(callback.Data, " ")[0]
+		switch {
+		case slices.Contains(calendarKeyboardCallbacks, command):
+			b.manageCalendarKeyboard(callback)
+		case callback.Data != "nil":
+			b.startDate, _ = parseDate(callback.Data)
+			if b.usersDb.IsUserHasGroup(b.chatID) {
+				b.closeCalendarMarkup(callback)
+				b.group = b.usersDb.GetUserGroup(b.chatID)
+				b.sendSchedule()
+				b.state = b.HandleMessage
+			} else {
+				b.state = b.chooseUniversity
+				b.nextFn = b.sendSchedule
+				message := echotron.NewMessageID(b.chatID, callback.Message.ID)
+				opts := echotron.MessageTextOptions{ReplyMarkup: ikb.FirstSymbolKeyboard()}
+				b.EditMessageText("Выберите первую цифру вашей группы", message, &opts)
+			}
 		}
 	}
 	return b.state
@@ -150,52 +155,65 @@ func (b *bot) getDate(update *echotron.Update) stateFn {
 
 func (b *bot) chooseUniversity(update *echotron.Update) stateFn {
 	callback := update.CallbackQuery
-	switch {
-	case callback != nil && callback.Data == "back":
-		b.EditMessageText("Вложение удалено", echotron.NewMessageID(b.chatID, callback.Message.ID), nil)
-		b.previousFn()
-		b.state = b.HandleMessage
-	case callback != nil:
-		b.state = b.getGroup
-		message := echotron.NewMessageID(b.chatID, callback.Message.ID)
-		opts := echotron.MessageTextOptions{
-			ReplyMarkup: ikb.CreateGroupKeyboard(b.groupDb.GroupsStartsWith(callback.Data), callback.Data, 1),
+	if callback != nil {
+		switch {
+		case callback.Data == "back":
+			b.EditMessageText(
+				"Вложение удалено",
+				echotron.NewMessageID(b.chatID, callback.Message.ID),
+				nil,
+			)
+			b.previousFn()
+			b.state = b.HandleMessage
+		default:
+			b.state = b.getGroup
+			message := echotron.NewMessageID(b.chatID, callback.Message.ID)
+			opts := echotron.MessageTextOptions{
+				ReplyMarkup: ikb.CreateGroupKeyboard(
+					b.groupDb.GroupsStartsWith(callback.Data),
+					callback.Data,
+					1,
+				),
+			}
+			b.EditMessageText("Выберите вашу группу", message, &opts)
 		}
-		b.EditMessageText("Выберите вашу группу", message, &opts)
 	}
 	return b.state
 }
 
 func (b *bot) getGroup(update *echotron.Update) stateFn {
 	callback := update.CallbackQuery
-	switch {
-	case callback != nil && callback.Data == "back":
-		opts := echotron.MessageTextOptions{
-			ReplyMarkup: ikb.FirstSymbolKeyboard(),
+	if callback == nil {
+		command := strings.Split(callback.Data, " ")[0]
+		switch {
+		case command == "back":
+			opts := echotron.MessageTextOptions{
+				ReplyMarkup: ikb.FirstSymbolKeyboard(),
+			}
+			b.EditMessageText("Выберите первую цифру вашей группы", echotron.NewMessageID(b.chatID, callback.Message.ID), &opts)
+			b.state = b.chooseUniversity
+		case slices.Contains(groupKeyboardCallbacks, command):
+			splitData := strings.Split(callback.Data, " ")
+			university, stringPart := splitData[1], splitData[2]
+			part, _ := strconv.Atoi(stringPart)
+			message := echotron.NewMessageID(b.chatID, callback.Message.ID)
+			groups := b.groupDb.GroupsStartsWith(university)
+			opts := echotron.MessageReplyMarkup{ReplyMarkup: ikb.CreateGroupKeyboard(
+				groups,
+				university,
+				part,
+			)}
+			b.EditMessageReplyMarkup(message, &opts)
+		default:
+			message := echotron.NewMessageID(b.chatID, callback.Message.ID)
+			b.EditMessageText(
+				"Вложение удалено",
+				message,
+				nil,
+			)
+			b.group, _ = strconv.Atoi(callback.Data)
+			b.nextFn()
 		}
-		b.EditMessageText("Выберите первую цифру вашей группы", echotron.NewMessageID(b.chatID, callback.Message.ID), &opts)
-		b.state = b.chooseUniversity
-	case callback != nil && slices.Contains(groupKeyboardCallbacks, strings.Split(callback.Data, " ")[0]):
-		splitData := strings.Split(callback.Data, " ")
-		university, stringPart := splitData[1], splitData[2]
-		part, _ := strconv.Atoi(stringPart)
-		message := echotron.NewMessageID(b.chatID, callback.Message.ID)
-		groups := b.groupDb.GroupsStartsWith(university)
-		opts := echotron.MessageReplyMarkup{ReplyMarkup: ikb.CreateGroupKeyboard(
-			groups,
-			university,
-			part,
-		)}
-		b.EditMessageReplyMarkup(message, &opts)
-	case callback != nil:
-		message := echotron.NewMessageID(b.chatID, callback.Message.ID)
-		b.EditMessageText(
-			"Вложение удалено",
-			message,
-			nil,
-		)
-		b.group, _ = strconv.Atoi(callback.Data)
-		b.nextFn()
 	}
 	return b.state
 }
@@ -215,43 +233,48 @@ func (b *bot) getDurationSchedule() {
 
 func (b *bot) getStartDate(update *echotron.Update) stateFn {
 	callback := update.CallbackQuery
-	switch {
-	case callback != nil && slices.Contains(calendarKeyboardCallbacks, strings.Split(callback.Data, " ")[0]):
-		b.manageCalendarKeyboard(callback)
-	case callback != nil && callback.Data != "nil":
-		b.startDate, _ = parseDate(callback.Data)
-		b.state = b.getSecondDate
-		b.answer("Выберите последний день диапазона (выберите день на клавиатуре сверху)", nil)
+	if callback != nil {
+		command := strings.Split(callback.Data, " ")[0]
+		switch {
+		case slices.Contains(calendarKeyboardCallbacks, command):
+			b.manageCalendarKeyboard(callback)
+		case callback.Data != "nil":
+			b.startDate, _ = parseDate(callback.Data)
+			b.state = b.getSecondDate
+			b.answer("Выберите последний день диапазона (выберите день на клавиатуре сверху)", nil)
+		}
 	}
 	return b.state
 }
 
 func (b *bot) getSecondDate(update *echotron.Update) stateFn {
 	callback := update.CallbackQuery
-	switch {
-	case callback != nil && slices.Contains(calendarKeyboardCallbacks, strings.Split(callback.Data, " ")[0]):
-		b.manageCalendarKeyboard(callback)
-	case callback != nil && callback.Data != "nil":
-		b.endDate, _ = parseDate(callback.Data)
-		b.dateSequenceCorrection()
-		if b.validDuration() {
-			if b.usersDb.IsUserHasGroup(b.chatID) {
-				b.closeCalendarMarkup(callback)
-				b.group = b.usersDb.GetUserGroup(b.chatID)
-				b.sendSchedule()
-				b.state = b.HandleMessage
+	if callback != nil {
+		switch {
+		case slices.Contains(calendarKeyboardCallbacks, strings.Split(callback.Data, " ")[0]):
+			b.manageCalendarKeyboard(callback)
+		case callback.Data != "nil":
+			b.endDate, _ = parseDate(callback.Data)
+			b.dateSequenceCorrection()
+			if b.validDuration() {
+				if b.usersDb.IsUserHasGroup(b.chatID) {
+					b.closeCalendarMarkup(callback)
+					b.group = b.usersDb.GetUserGroup(b.chatID)
+					b.sendSchedule()
+					b.state = b.HandleMessage
+				} else {
+					b.state = b.chooseUniversity
+					b.nextFn = b.sendSchedule
+					message := echotron.NewMessageID(b.chatID, callback.Message.ID)
+					opts := echotron.MessageTextOptions{ReplyMarkup: ikb.FirstSymbolKeyboard()}
+					b.EditMessageText("Выберите первую цифру вашей группы", message, &opts)
+				}
 			} else {
-				b.state = b.chooseUniversity
-				b.nextFn = b.sendSchedule
-				message := echotron.NewMessageID(b.chatID, callback.Message.ID)
-				opts := echotron.MessageTextOptions{ReplyMarkup: ikb.FirstSymbolKeyboard()}
-				b.EditMessageText("Выберите первую цифру вашей группы", message, &opts)
+				b.answer(
+					"Вы ввели слишком большой диапазон. Максимальная длина диапазона не должна превышать 31 дня. (Выберите другой день на клавиатуре)",
+					nil,
+				)
 			}
-		} else {
-			b.answer(
-				"Вы ввели слишком большой диапазон. Максимальная длина диапазона не должна превышать 31 дня. (Выберите другой день на клавиатуре)",
-				nil,
-			)
 		}
 	}
 	return b.state
