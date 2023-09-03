@@ -1,6 +1,7 @@
 package reload
 
 import (
+	"sort"
 	"time"
 
 	"github.com/BobaUbisoft17/chsuBot/internal/schedule"
@@ -29,17 +30,17 @@ func collectLecture(sched []schedule.Lecture) (map[int]map[int][]schedule.Lectur
 }
 
 func splitSchedule(schedules map[int][]schedule.Lecture) ([]schedule.Lecture, []schedule.Lecture) {
-	if len(schedules) == 2 {
-		return schedules[0], schedules[1]
-	}
 	datesInTimestamp := pkg.GetKeys(schedules)
-	todayTimestamp := min(datesInTimestamp)
-	today := time.Unix(int64(todayTimestamp), 0)
-
-	if time.Since(today) < time.Hour*24 {
-		return schedules[0], []schedule.Lecture{}
+	if len(schedules) == 2 {
+		sort.Ints(datesInTimestamp)
+		return schedules[datesInTimestamp[0]], schedules[datesInTimestamp[0]]
 	}
-	return []schedule.Lecture{}, schedules[0]
+	today := time.Unix(int64(datesInTimestamp[0]), 0)
+	durationFromToNow := time.Since(today)
+	if durationFromToNow < time.Hour*24 && durationFromToNow >= 0 {
+		return schedules[datesInTimestamp[0]], []schedule.Lecture{}
+	}
+	return []schedule.Lecture{}, schedules[datesInTimestamp[0]]
 }
 
 func min(num []int) int {
