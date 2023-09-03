@@ -26,6 +26,24 @@ func (b *bot) answer(answer string, keyboard echotron.ReplyMarkup) {
 	}
 }
 
+func (b *bot) editMessage(messageID int, answer string, keyboard echotron.InlineKeyboardMarkup) {
+	message := echotron.NewMessageID(b.chatID, messageID)
+	opts := echotron.MessageTextOptions{ReplyMarkup: keyboard}
+	_, err := b.EditMessageText(answer, message, &opts)
+	if err != nil {
+		b.logger.Errorf("%v", err)
+	}
+}
+
+func (b *bot) editKeyboard(messageID int, keyboard echotron.InlineKeyboardMarkup) {
+	message := echotron.NewMessageID(b.chatID, messageID)
+	opts := echotron.MessageReplyMarkup{ReplyMarkup: keyboard}
+	_, err := b.EditMessageReplyMarkup(message, &opts)
+	if err != nil {
+		b.logger.Errorf("%v", err)
+	}
+}
+
 func getReplyMarkupMessageOptions(replyMarkup echotron.ReplyMarkup) echotron.MessageOptions {
 	return echotron.MessageOptions{
 		ReplyMarkup: replyMarkup,
@@ -118,7 +136,7 @@ func buildSchedule(schedules []schedule.Lecture) ([]string, error) {
 
 	sortedSchedule, err := sortScheduleByDate(schedules)
 	if err != nil {
-		return []string{}, err
+		return messages, err
 	}
 	keys := pkg.GetKeys(sortedSchedule)
 	sort.Ints(keys)
@@ -144,20 +162,16 @@ func (b *bot) changeMonth(callback *echotron.CallbackQuery) {
 	} else {
 		markup = ikb.New(month, year).PreviousMonth()
 	}
-	message := echotron.NewMessageID(b.chatID, callback.Message.ID)
-	opts := echotron.MessageReplyMarkup{ReplyMarkup: markup}
-	b.EditMessageReplyMarkup(message, &opts)
+	b.editKeyboard(callback.Message.ID, markup)
 }
 
 func (b *bot) closeCalendarMarkup(callback *echotron.CallbackQuery) {
-	message := echotron.NewMessageID(b.chatID, callback.Message.ID)
-	b.EditMessageText("Вложение удалено", message, nil)
+	b.editMessage(callback.Message.ID, "Вложение удалено", echotron.InlineKeyboardMarkup{})
 }
 
 func (b *bot) getFirstSymbolKeyboard() {
 	replyMarkup := ikb.FirstSymbolKeyboard()
-	messageOptions := getReplyMarkupMessageOptions(replyMarkup)
-	b.SendMessage("Выберите первую цифру номера вашей группы", b.chatID, &messageOptions)
+	b.answer("Выберите первую цифру номера вашей группы", replyMarkup)
 }
 
 func (b *bot) manageCalendarKeyboard(callback *echotron.CallbackQuery) {

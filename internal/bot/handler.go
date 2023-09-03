@@ -144,9 +144,11 @@ func (b *bot) getDate(update *echotron.Update) stateFn {
 			} else {
 				b.state = b.chooseUniversity
 				b.nextFn = b.sendSchedule
-				message := echotron.NewMessageID(b.chatID, callback.Message.ID)
-				opts := echotron.MessageTextOptions{ReplyMarkup: ikb.FirstSymbolKeyboard()}
-				b.EditMessageText("Выберите первую цифру вашей группы", message, &opts)
+				b.editMessage(
+					callback.Message.ID,
+					"Выберите первую цифру вашей группы",
+					ikb.FirstSymbolKeyboard(),
+				)
 			}
 		}
 	}
@@ -158,24 +160,21 @@ func (b *bot) chooseUniversity(update *echotron.Update) stateFn {
 	if callback != nil {
 		switch {
 		case callback.Data == "back":
-			b.EditMessageText(
+			b.editMessage(
+				callback.Message.ID,
 				"Вложение удалено",
-				echotron.NewMessageID(b.chatID, callback.Message.ID),
-				nil,
+				echotron.InlineKeyboardMarkup{},
 			)
 			b.previousFn()
 			b.state = b.HandleMessage
 		default:
 			b.state = b.getGroup
-			message := echotron.NewMessageID(b.chatID, callback.Message.ID)
-			opts := echotron.MessageTextOptions{
-				ReplyMarkup: ikb.CreateGroupKeyboard(
-					b.groupDb.GroupsStartsWith(callback.Data),
-					callback.Data,
-					1,
-				),
-			}
-			b.EditMessageText("Выберите вашу группу", message, &opts)
+			keyboard := ikb.CreateGroupKeyboard(
+				b.groupDb.GroupsStartsWith(callback.Data),
+				callback.Data,
+				1,
+			)
+			b.editMessage(callback.Message.ID, "Выберите вашу группу", keyboard)
 		}
 	}
 	return b.state
@@ -183,34 +182,20 @@ func (b *bot) chooseUniversity(update *echotron.Update) stateFn {
 
 func (b *bot) getGroup(update *echotron.Update) stateFn {
 	callback := update.CallbackQuery
-	if callback == nil {
+	if callback != nil {
 		command := strings.Split(callback.Data, " ")[0]
 		switch {
 		case command == "back":
-			opts := echotron.MessageTextOptions{
-				ReplyMarkup: ikb.FirstSymbolKeyboard(),
-			}
-			b.EditMessageText("Выберите первую цифру вашей группы", echotron.NewMessageID(b.chatID, callback.Message.ID), &opts)
+			b.editMessage(callback.Message.ID, "Выберите первую цифру вашей группы", ikb.FirstSymbolKeyboard())
 			b.state = b.chooseUniversity
 		case slices.Contains(groupKeyboardCallbacks, command):
 			splitData := strings.Split(callback.Data, " ")
 			university, stringPart := splitData[1], splitData[2]
 			part, _ := strconv.Atoi(stringPart)
-			message := echotron.NewMessageID(b.chatID, callback.Message.ID)
 			groups := b.groupDb.GroupsStartsWith(university)
-			opts := echotron.MessageReplyMarkup{ReplyMarkup: ikb.CreateGroupKeyboard(
-				groups,
-				university,
-				part,
-			)}
-			b.EditMessageReplyMarkup(message, &opts)
+			b.editKeyboard(callback.Message.ID, ikb.CreateGroupKeyboard(groups, university, part))
 		default:
-			message := echotron.NewMessageID(b.chatID, callback.Message.ID)
-			b.EditMessageText(
-				"Вложение удалено",
-				message,
-				nil,
-			)
+			b.editMessage(callback.Message.ID, "Вложение удалено", echotron.InlineKeyboardMarkup{})
 			b.group, _ = strconv.Atoi(callback.Data)
 			b.nextFn()
 		}
@@ -265,9 +250,7 @@ func (b *bot) getSecondDate(update *echotron.Update) stateFn {
 				} else {
 					b.state = b.chooseUniversity
 					b.nextFn = b.sendSchedule
-					message := echotron.NewMessageID(b.chatID, callback.Message.ID)
-					opts := echotron.MessageTextOptions{ReplyMarkup: ikb.FirstSymbolKeyboard()}
-					b.EditMessageText("Выберите первую цифру вашей группы", message, &opts)
+					b.editMessage(callback.Message.ID, "Выберите первую цифру вашей группы", ikb.FirstSymbolKeyboard())
 				}
 			} else {
 				b.answer(
