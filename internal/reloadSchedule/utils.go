@@ -33,7 +33,7 @@ func splitSchedule(schedules map[int][]schedule.Lecture) ([]schedule.Lecture, []
 	datesInTimestamp := pkg.GetKeys(schedules)
 	if len(schedules) == 2 {
 		sort.Ints(datesInTimestamp)
-		return schedules[datesInTimestamp[0]], schedules[datesInTimestamp[0]]
+		return schedules[datesInTimestamp[0]], schedules[datesInTimestamp[1]]
 	}
 	today := time.Unix(int64(datesInTimestamp[0]), 0)
 	durationFromToNow := time.Since(today)
