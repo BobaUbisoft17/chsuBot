@@ -19,9 +19,9 @@ func (b *bot) answer(answer string, keyboard echotron.ReplyMarkup) {
 	_, err := b.SendMessage(answer, b.chatID, &messageOptions)
 	if err != nil {
 		if err.Error() == "API error: 403 Forbidden: bot was blocked by the user" {
-			b.usersDb.DeleteUser(int64(b.chatID))
+			b.usePackages.usersDb.DeleteUser(int64(b.chatID))
 		} else {
-			b.logger.Errorf("%v", err)
+			b.usePackages.logger.Errorf("%v", err)
 		}
 	}
 }
@@ -31,7 +31,7 @@ func (b *bot) editMessage(messageID int, answer string, keyboard echotron.Inline
 	opts := echotron.MessageTextOptions{ReplyMarkup: keyboard}
 	_, err := b.EditMessageText(answer, message, &opts)
 	if err != nil {
-		b.logger.Errorf("%v", err)
+		b.usePackages.logger.Errorf("%v", err)
 	}
 }
 
@@ -40,7 +40,7 @@ func (b *bot) editKeyboard(messageID int, keyboard echotron.InlineKeyboardMarkup
 	opts := echotron.MessageReplyMarkup{ReplyMarkup: keyboard}
 	_, err := b.EditMessageReplyMarkup(message, &opts)
 	if err != nil {
-		b.logger.Errorf("%v", err)
+		b.usePackages.logger.Errorf("%v", err)
 	}
 }
 
@@ -53,7 +53,7 @@ func getReplyMarkupMessageOptions(replyMarkup echotron.ReplyMarkup) echotron.Mes
 
 func (b *bot) sendTextPost() {
 	var wg sync.WaitGroup
-	userIDs := b.usersDb.GetUsersId()
+	userIDs := b.usePackages.usersDb.GetUsersId()
 	for _, userID := range userIDs {
 		wg.Add(1)
 		go func(userID int, text string) {
@@ -61,9 +61,9 @@ func (b *bot) sendTextPost() {
 			_, err := b.SendMessage(text, int64(userID), nil)
 			if err != nil {
 				if err.Error() == "API error: 403 Forbidden: bot was blocked by the user" {
-					b.usersDb.DeleteUser(int64(userID))
+					b.usePackages.usersDb.DeleteUser(int64(userID))
 				} else {
-					b.logger.Errorf("%v", err)
+					b.usePackages.logger.Errorf("%v", err)
 				}
 			}
 		}(userID, b.postText)
@@ -76,7 +76,7 @@ func (b *bot) sendTextPost() {
 
 func (b *bot) sendPostWithImage(postPhoto echotron.InputFile) {
 	var wg sync.WaitGroup
-	userIDs := b.usersDb.GetUsersId()
+	userIDs := b.usePackages.usersDb.GetUsersId()
 	photoOpts := echotron.PhotoOptions{
 		Caption: b.postText,
 	}
@@ -86,9 +86,9 @@ func (b *bot) sendPostWithImage(postPhoto echotron.InputFile) {
 			defer wg.Done()
 			_, err := b.SendPhoto(photo, int64(userID), &photoOpts)
 			if err.Error() == "API error: 403 Forbidden: bot was blocked by the user" {
-				b.usersDb.DeleteUser(int64(userID))
+				b.usePackages.usersDb.DeleteUser(int64(userID))
 			} else {
-				b.logger.Errorf("%v", err)
+				b.usePackages.logger.Errorf("%v", err)
 			}
 		}(int64(userID), postPhoto, photoOpts)
 	}
@@ -103,14 +103,14 @@ func (b *bot) sendSchedule() {
 		b.endDate = b.startDate
 	}
 
-	unParseSchedule, err := b.chsuAPI.One(b.startDate.Format("02.01.2006"), b.endDate.Format("02.01.2006"), b.group)
+	unParseSchedule, err := b.usePackages.chsuAPI.One(b.startDate.Format("02.01.2006"), b.endDate.Format("02.01.2006"), b.group)
 	if err != nil {
-		b.logger.Errorf("%v", err)
+		b.usePackages.logger.Errorf("%v", err)
 	}
 
 	schedule, err := buildSchedule(unParseSchedule)
 	if err != nil {
-		b.logger.Errorf("%v", err)
+		b.usePackages.logger.Errorf("%v", err)
 		b.group = 0
 		return
 	}
@@ -154,7 +154,7 @@ func buildSchedule(schedules []schedule.Lecture) ([]string, error) {
 func (b *bot) changeMonth(callback *echotron.CallbackQuery) {
 	month, year, err := getDate(callback.Data)
 	if err != nil {
-		b.logger.Errorf("Error getting date: %v", err)
+		b.usePackages.logger.Errorf("Error getting date: %v", err)
 	}
 	var markup echotron.InlineKeyboardMarkup
 	if strings.Contains(callback.Data, "next") {

@@ -6,7 +6,7 @@ import (
 )
 
 func (b *bot) IsAdmin(nextFunc nextFn) {
-	if int(b.chatID) == b.adminId {
+	if int(b.chatID) == b.usePackages.adminId {
 		nextFunc()
 	}
 }

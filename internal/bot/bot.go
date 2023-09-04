@@ -37,6 +37,15 @@ type stateFn func(*echotron.Update) stateFn
 
 type nextFn func()
 
+type usePackages struct {
+	adminId int
+	chsuAPI api
+	groupDb groupStorage
+	logger  *logging.Logger
+	token   string
+	usersDb userStorage
+}
+
 type bot struct {
 	chatID     int64
 	state      stateFn
@@ -47,16 +56,11 @@ type bot struct {
 	endDate    time.Time
 	postText   string
 	echotron.API
-	chsuAPI api
-	groupDb groupStorage
-	logger  *logging.Logger
-	token   string
-	adminId int
-	usersDb userStorage
+	usePackages *usePackages
 }
 
-func New(api api, groupDb groupStorage, userDb userStorage, logger *logging.Logger, token string, adminId int) *bot {
-	return &bot{
+func New(api api, groupDb groupStorage, userDb userStorage, logger *logging.Logger, token string, adminId int) *usePackages {
+	return &usePackages{
 		chsuAPI: api,
 		groupDb: groupDb,
 		usersDb: userDb,
@@ -66,11 +70,14 @@ func New(api api, groupDb groupStorage, userDb userStorage, logger *logging.Logg
 	}
 }
 
-func (b *bot) newBot(chatID int64) echotron.Bot {
-	b.chatID = chatID
-	b.API = echotron.NewAPI(b.token)
-	b.state = b.HandleMessage
-	return b
+func (u *usePackages) newBot(chatID int64) echotron.Bot {
+	bot := &bot{
+		chatID:      chatID,
+		API:         echotron.NewAPI(u.token),
+		usePackages: u,
+	}
+	bot.state = bot.HandleMessage
+	return bot
 }
 
 func (b *bot) Update(update *echotron.Update) {
@@ -79,7 +86,7 @@ func (b *bot) Update(update *echotron.Update) {
 	}
 }
 
-func (b *bot) StartBot() {
-	dsp := echotron.NewDispatcher(b.token, b.newBot)
-	b.logger.Info(dsp.Poll())
+func (u *usePackages) StartBot() {
+	dsp := echotron.NewDispatcher(u.token, u.newBot)
+	u.logger.Info(dsp.Poll())
 }
