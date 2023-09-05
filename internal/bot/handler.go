@@ -44,6 +44,8 @@ func (b *bot) HandleMessage(update *echotron.Update) stateFn {
 			b.changeGroup()
 		case "Удалить данные о группе":
 			b.deleteGroupInfo()
+		case "Помощь":
+			b.help()
 		}
 	}
 	return b.state
@@ -186,16 +188,27 @@ func (b *bot) getGroup(update *echotron.Update) stateFn {
 		command := strings.Split(callback.Data, " ")[0]
 		switch {
 		case command == "back":
-			b.editMessage(callback.Message.ID, "Выберите первую цифру вашей группы", ikb.FirstSymbolKeyboard())
+			b.editMessage(
+				callback.Message.ID,
+				"Выберите первую цифру вашей группы",
+				ikb.FirstSymbolKeyboard(),
+			)
 			b.state = b.chooseUniversity
 		case slices.Contains(groupKeyboardCallbacks, command):
 			splitData := strings.Split(callback.Data, " ")
 			university, stringPart := splitData[1], splitData[2]
 			part, _ := strconv.Atoi(stringPart)
 			groups := b.usePackages.groupDb.GroupsStartsWith(university)
-			b.editKeyboard(callback.Message.ID, ikb.CreateGroupKeyboard(groups, university, part))
+			b.editKeyboard(
+				callback.Message.ID,
+				ikb.CreateGroupKeyboard(groups, university, part),
+			)
 		default:
-			b.editMessage(callback.Message.ID, "Вложение удалено", echotron.InlineKeyboardMarkup{})
+			b.editMessage(
+				callback.Message.ID,
+				"Вложение удалено",
+				echotron.InlineKeyboardMarkup{},
+			)
 			b.group, _ = strconv.Atoi(callback.Data)
 			b.nextFn()
 		}
@@ -226,7 +239,10 @@ func (b *bot) getStartDate(update *echotron.Update) stateFn {
 		case callback.Data != "nil":
 			b.startDate, _ = parseDate(callback.Data)
 			b.state = b.getSecondDate
-			b.answer("Выберите последний день диапазона (выберите день на клавиатуре сверху)", nil)
+			b.answer(
+				"Выберите последний день диапазона (выберите день на клавиатуре сверху)",
+				nil,
+			)
 		}
 	}
 	return b.state
@@ -250,11 +266,17 @@ func (b *bot) getSecondDate(update *echotron.Update) stateFn {
 				} else {
 					b.state = b.chooseUniversity
 					b.nextFn = b.sendSchedule
-					b.editMessage(callback.Message.ID, "Выберите первую цифру вашей группы", ikb.FirstSymbolKeyboard())
+					b.editMessage(
+						callback.Message.ID,
+						"Выберите первую цифру вашей группы",
+						ikb.FirstSymbolKeyboard(),
+					)
 				}
 			} else {
 				b.answer(
-					"Вы ввели слишком большой диапазон. Максимальная длина диапазона не должна превышать 31 дня. (Выберите другой день на клавиатуре)",
+					"Вы ввели слишком большой диапазон. "+
+						"Максимальная длина диапазона не должна превышать 31 дня. "+
+						"(Выберите другой день на клавиатуре)",
 					nil,
 				)
 			}
@@ -333,4 +355,22 @@ func (b *bot) deleteGroupInfo() {
 	} else {
 		b.answer("Не ломайте меня, пожалуйста🙏", nil)
 	}
+}
+
+func (b *bot) help() {
+	b.answer(
+		"Бот, упрощающий получение расписания студениами ЧГУ.\n\n"+
+			"Получение расписания - можно получать расписание как на сегодня/завтра, "+
+			"так и на произвольную дату или произвольный промежуток."+
+			"Есть функция запоминания группы пользователя для получения "+
+			"расписания по нажатию *одной кнопки.\n\n"+
+			"Исходный код скоро будет выложен на GitHub "+
+			"https://github.com/BobaUbisoft17\n"+
+			"Связаться с автором проекта:\n"+
+			"Телеграм @BobaUbisoft\n"+
+			"VK vk.com/bobaubisoft\n"+
+			"Почта aksud2316@gmail.com\n\n"+
+			"Поддержать проект: 5536 9137 8142 8269",
+		nil,
+	)
 }
