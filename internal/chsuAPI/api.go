@@ -32,7 +32,11 @@ func (a *API) tokenIsValid() (bool, error) {
 		return false, nil
 	}
 
-	resp, err := http.Post(URL+"auth/valid/", "application/json", bytes.NewBufferString(a.Token))
+	resp, err := http.Post(
+		URL+"auth/valid/",
+		"application/json",
+		bytes.NewBufferString(a.Token),
+	)
 	if err != nil {
 		return false, err
 	}
@@ -57,7 +61,11 @@ func (a *API) updateToken() error {
 		return err
 	}
 
-	resp, err := http.Post(URL+"/auth/signin", "application/json", bytes.NewBuffer(bytesData))
+	resp, err := http.Post(
+		URL+"/auth/signin",
+		"application/json",
+		bytes.NewBuffer(bytesData),
+	)
 	if err != nil {
 		return err
 	}
@@ -126,7 +134,12 @@ func (api *API) One(startDate, endDate string, groupId int) ([]schedule.Lecture,
 }
 
 func (a *API) requestOne(startDate, endDate string, groupId int) ([]schedule.Lecture, error) {
-	requestBody := fmt.Sprintf("timetable/v1/from/%v/to/%v/groupId/%v/", startDate, endDate, groupId)
+	requestBody := fmt.Sprintf(
+		"timetable/v1/from/%v/to/%v/groupId/%v/",
+		startDate,
+		endDate,
+		groupId,
+	)
 	request, err := http.NewRequest(http.MethodGet, URL+requestBody, nil)
 	if err != nil {
 		return []schedule.Lecture{}, err

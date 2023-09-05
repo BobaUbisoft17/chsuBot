@@ -103,7 +103,11 @@ func (b *bot) sendSchedule() {
 		b.endDate = b.startDate
 	}
 
-	unParseSchedule, err := b.usePackages.chsuAPI.One(b.startDate.Format("02.01.2006"), b.endDate.Format("02.01.2006"), b.group)
+	unParseSchedule, err := b.usePackages.chsuAPI.One(
+		b.startDate.Format("02.01.2006"),
+		b.endDate.Format("02.01.2006"),
+		b.group,
+	)
 	if err != nil {
 		b.usePackages.logger.Errorf("%v", err)
 	}
@@ -166,7 +170,11 @@ func (b *bot) changeMonth(callback *echotron.CallbackQuery) {
 }
 
 func (b *bot) closeCalendarMarkup(callback *echotron.CallbackQuery) {
-	b.editMessage(callback.Message.ID, "Вложение удалено", echotron.InlineKeyboardMarkup{})
+	b.editMessage(
+		callback.Message.ID,
+		"Вложение удалено",
+		echotron.InlineKeyboardMarkup{},
+	)
 }
 
 func (b *bot) getFirstSymbolKeyboard() {
