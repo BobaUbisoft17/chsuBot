@@ -44,6 +44,7 @@ type usePackages struct {
 	logger  *logging.Logger
 	token   string
 	usersDb userStorage
+	webhook string
 }
 
 type bot struct {
@@ -59,7 +60,7 @@ type bot struct {
 	usePackages *usePackages
 }
 
-func New(api api, groupDb groupStorage, userDb userStorage, logger *logging.Logger, token string, adminId int) *usePackages {
+func New(api api, groupDb groupStorage, userDb userStorage, logger *logging.Logger, token string, adminId int, webhook string) *usePackages {
 	return &usePackages{
 		chsuAPI: api,
 		groupDb: groupDb,
@@ -88,5 +89,11 @@ func (b *bot) Update(update *echotron.Update) {
 
 func (u *usePackages) StartBot() {
 	dsp := echotron.NewDispatcher(u.token, u.newBot)
-	u.logger.Info(dsp.Poll())
+	if u.webhook != "" {
+		u.logger.Info("Start on webhook")
+		dsp.ListenWebhook(u.webhook)
+	} else {
+		u.logger.Info("Start on long polling")
+		dsp.PollOptions(false, echotron.UpdateOptions{Timeout: 120})
+	}
 }

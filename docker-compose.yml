@@ -20,10 +20,11 @@ services:
         restart:
             on-failure
         environment:
-            TZ: Europe/Moscow
+            ADMIN: ${ADMIN}
             BOTTOKEN: ${BOTTOKEN}
             DATABASEURL: ${DATABASEURL}
-            ADMIN: ${ADMIN}
+            WEBHOOKURL: ${WEBHOOKURL}
+            TZ: Europe/Moscow
         depends_on:
             - db
 volumes:

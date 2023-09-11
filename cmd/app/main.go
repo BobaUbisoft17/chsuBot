@@ -58,6 +58,7 @@ func main() {
 		logger,
 		cfg.TelegramBotToken,
 		cfg.AdminId,
+		cfg.WebhookURL,
 	)
 	var wg sync.WaitGroup
 	wg.Add(1)
