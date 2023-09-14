@@ -11,7 +11,7 @@ type Config struct {
 	TelegramBotToken string `env:"BOTTOKEN" env-required:true`
 	DatabaseURL      string `env:"DATABASEURL" env-default:"postgres://postgres:postgres@localhost:5432/chsuBot?sslmode=disable"`
 	AdminId          int    `env:"ADMIN" env-required:true`
-	WebhookURL       string `env:WEBHOOKURL`
+	WebhookURL       string `env:"WEBHOOKURL"`
 }
 
 var (

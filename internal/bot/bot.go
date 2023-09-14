@@ -68,6 +68,7 @@ func New(api api, groupDb groupStorage, userDb userStorage, logger *logging.Logg
 		logger:  logger,
 		token:   token,
 		adminId: adminId,
+		webhook: webhook,
 	}
 }
 
