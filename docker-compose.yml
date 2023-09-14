@@ -25,6 +25,7 @@ services:
             DATABASEURL: ${DATABASEURL}
             WEBHOOKURL: ${WEBHOOKURL}
             TZ: Europe/Moscow
+            TYPESTART: 
         depends_on:
             - db
 volumes:

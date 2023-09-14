@@ -56,8 +56,9 @@ func main() {
 		groupDb,
 		userDb,
 		logger,
-		cfg.TelegramBotToken,
 		cfg.AdminId,
+		cfg.TelegramBotToken,
+		cfg.TypeStart,
 		cfg.WebhookURL,
 	)
 	var wg sync.WaitGroup
