@@ -15,8 +15,11 @@ import (
 )
 
 func (b *bot) answer(answer string, keyboard echotron.ReplyMarkup) {
-	messageOptions := getReplyMarkupMessageOptions(keyboard)
-	_, err := b.SendMessage(answer, b.chatID, &messageOptions)
+	var messageOptions *echotron.MessageOptions
+	if keyboard != nil {
+		messageOptions = getReplyMarkupMessageOptions(keyboard)
+	}
+	_, err := b.SendMessage(answer, b.chatID, messageOptions)
 	if err != nil {
 		if err.Error() == "API error: 403 Forbidden: bot was blocked by the user" {
 			b.usePackages.usersDb.DeleteUser(int64(b.chatID))
@@ -44,8 +47,8 @@ func (b *bot) editKeyboard(messageID int, keyboard echotron.InlineKeyboardMarkup
 	}
 }
 
-func getReplyMarkupMessageOptions(replyMarkup echotron.ReplyMarkup) echotron.MessageOptions {
-	return echotron.MessageOptions{
+func getReplyMarkupMessageOptions(replyMarkup echotron.ReplyMarkup) *echotron.MessageOptions {
+	return &echotron.MessageOptions{
 		ReplyMarkup: replyMarkup,
 		ParseMode:   "Markdown",
 	}
