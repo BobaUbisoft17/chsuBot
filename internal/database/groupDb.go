@@ -169,7 +169,10 @@ func (s *GroupStorage) UnusedID(ids []int) []int {
 	defer rows.Close()
 	var id int
 	for rows.Next() {
-		rows.Scan(&id)
+		err = rows.Scan(&id)
+		if err != nil {
+			s.logger.Errorf("%v", err)
+		}
 		if !slices.Contains(ids, id) {
 			unusedKeys = append(unusedKeys, id)
 		}

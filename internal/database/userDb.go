@@ -31,12 +31,10 @@ func (s *UserStorage) Start() {
 		s.logger.Error(err)
 	}
 	defer db.Close()
-	statement, err := db.Prepare("CREATE TABLE IF NOT EXISTS users (userID BIGINT, groupID BIGINT)")
+	_, err = db.Exec("CREATE TABLE IF NOT EXISTS users (userID BIGINT, groupID BIGINT)")
 	if err != nil {
 		s.logger.Error(err)
 	}
-	defer statement.Close()
-	statement.Exec()
 }
 
 func (s *UserStorage) IsUserInDB(userID int64) bool {
@@ -135,7 +133,6 @@ func (s *UserStorage) DeleteUser(userID int64) {
 }
 
 func (s *UserStorage) GetUsersId() []int {
-
 	db, err := sql.Open("pgx", s.DbUrl)
 	if err != nil {
 		s.logger.Errorf("%v", err)
@@ -151,7 +148,9 @@ func (s *UserStorage) GetUsersId() []int {
 	var userIds []int
 	var id int
 	for rows.Next() {
-		rows.Scan(&id)
+		if err = rows.Scan(&id); err != nil {
+			s.logger.Errorf("%v", err)
+		}
 		userIds = append(userIds, id)
 	}
 	return userIds
