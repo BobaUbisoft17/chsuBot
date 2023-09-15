@@ -94,9 +94,9 @@ func (u *usePackages) StartBot() {
 	dsp := echotron.NewDispatcher(u.token, u.newBot)
 	if u.typeStart == "webhook" {
 		u.logger.Info("Start on webhook")
-		dsp.ListenWebhook(u.webhook)
+		u.logger.Info(dsp.ListenWebhook(u.webhook))
 	} else {
 		u.logger.Info("Start on long polling")
-		dsp.PollOptions(false, echotron.UpdateOptions{Timeout: 120})
+		u.logger.Info(dsp.PollOptions(false, echotron.UpdateOptions{Timeout: 120}))
 	}
 }
