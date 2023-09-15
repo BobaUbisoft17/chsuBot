@@ -42,13 +42,3 @@ func splitSchedule(schedules map[int][]schedule.Lecture) ([]schedule.Lecture, []
 	}
 	return []schedule.Lecture{}, schedules[datesInTimestamp[0]]
 }
-
-func min(num []int) int {
-	var minNum int
-	for i := 0; i < len(num); i++ {
-		if minNum > num[i] {
-			minNum = num[i]
-		}
-	}
-	return minNum
-}
