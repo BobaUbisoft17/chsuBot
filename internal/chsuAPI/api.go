@@ -7,7 +7,6 @@ import (
 	"fmt"
 	"io"
 	"net/http"
-	"strconv"
 	"strings"
 	"time"
 
@@ -25,34 +24,6 @@ func New(data map[string]string, logger *logging.Logger) *API {
 		Client: &http.Client{},
 		logger: logger,
 	}
-}
-
-func (a *API) tokenIsValid() (bool, error) {
-	if a.Token == "" {
-		return false, nil
-	}
-
-	resp, err := http.Post(
-		URL+"auth/valid/",
-		"application/json",
-		bytes.NewBufferString(a.Token),
-	)
-	if err != nil {
-		return false, err
-	}
-
-	byteResp, err := io.ReadAll(resp.Body)
-	if err != nil {
-		return false, err
-	}
-
-	answer, err := strconv.ParseBool(string(byteResp))
-	if err != nil {
-		return false, err
-	}
-
-	return answer, nil
-
 }
 
 func (a *API) updateToken() error {
@@ -85,17 +56,20 @@ func (a *API) updateToken() error {
 }
 
 func (a *API) GroupsId() ([]GroupIds, error) {
-	tokenIsValid, err := a.tokenIsValid()
-	if err != nil {
-		return []GroupIds{}, err
-	}
-
-	if !tokenIsValid {
-		if err = a.updateToken(); err != nil {
-			return []GroupIds{}, err
+	for {
+		groupIds, err := a.requestGroupsId()
+		if errors.Is(err, ErrInvalidToken) {
+			if err = a.updateToken(); err != nil {
+				return nil, err
+			} else {
+				continue
+			}
 		}
+		return groupIds, nil
 	}
+}
 
+func (a *API) requestGroupsId() ([]GroupIds, error) {
 	request, err := http.NewRequest(http.MethodGet, URL+"group/v1", nil)
 	if err != nil {
 		return []GroupIds{}, err
@@ -104,6 +78,9 @@ func (a *API) GroupsId() ([]GroupIds, error) {
 	request.Header.Add("Authorization", fmt.Sprintf("Bearer %s", a.Token))
 	response, err := a.Client.Do(request)
 	if err != nil {
+		if response.StatusCode == 403 {
+			return nil, ErrInvalidToken
+		}
 		return []GroupIds{}, err
 	}
 
@@ -113,17 +90,20 @@ func (a *API) GroupsId() ([]GroupIds, error) {
 	}
 	ids, err := readJson[[]GroupIds](body)
 	if err != nil {
+		if strings.Contains(err.Error(), "invalid character") {
+			return nil, ErrInvalidToken
+		}
 		return []GroupIds{}, err
 	}
 
 	return ids, nil
 }
 
-func (api *API) One(startDate, endDate string, groupId int) ([]schedule.Lecture, error) {
+func (a *API) One(startDate, endDate string, groupId int) ([]schedule.Lecture, error) {
 	for {
-		lectures, err := api.requestOne(startDate, endDate, groupId)
+		lectures, err := a.requestOne(startDate, endDate, groupId)
 		if errors.Is(err, ErrInvalidToken) {
-			if err = api.updateToken(); err != nil {
+			if err = a.updateToken(); err != nil {
 				return nil, err
 			} else {
 				continue
@@ -148,6 +128,9 @@ func (a *API) requestOne(startDate, endDate string, groupId int) ([]schedule.Lec
 	request.Header.Add("Authorization", fmt.Sprintf("Bearer %s", a.Token))
 	response, err := a.Client.Do(request)
 	if err != nil {
+		if response.StatusCode == 403 {
+			return nil, ErrInvalidToken
+		}
 		return []schedule.Lecture{}, err
 	}
 
@@ -159,18 +142,17 @@ func (a *API) requestOne(startDate, endDate string, groupId int) ([]schedule.Lec
 	if err != nil {
 		if strings.Contains(err.Error(), "invalid character") {
 			return nil, ErrInvalidToken
-		} else {
-			return []schedule.Lecture{}, err
 		}
+		return []schedule.Lecture{}, err
 	}
 	return lessons, nil
 }
 
-func (api *API) All() ([]schedule.Lecture, error) {
+func (a *API) All() ([]schedule.Lecture, error) {
 	for {
-		schedules, err := api.requestAll()
+		schedules, err := a.requestAll()
 		if errors.Is(err, ErrInvalidToken) {
-			if err = api.updateToken(); err != nil {
+			if err = a.updateToken(); err != nil {
 				return nil, err
 			} else {
 				continue
@@ -192,6 +174,9 @@ func (a *API) requestAll() ([]schedule.Lecture, error) {
 
 	resp, err := a.Client.Do(request)
 	if err != nil {
+		if resp.StatusCode == 403 {
+			return nil, ErrInvalidToken
+		}
 		return []schedule.Lecture{}, err
 	}
 
@@ -203,9 +188,8 @@ func (a *API) requestAll() ([]schedule.Lecture, error) {
 	if err != nil {
 		if strings.Contains(err.Error(), "invalid character") {
 			return nil, ErrInvalidToken
-		} else {
-			return []schedule.Lecture{}, err
 		}
+		return []schedule.Lecture{}, err
 	}
 	return sliceLectures, nil
 }
