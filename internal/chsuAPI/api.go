@@ -128,10 +128,10 @@ func (a *API) requestOne(startDate, endDate string, groupId int) ([]schedule.Lec
 	request.Header.Add("Authorization", fmt.Sprintf("Bearer %s", a.Token))
 	response, err := a.Client.Do(request)
 	if err != nil {
-		if response.StatusCode == 403 {
-			return nil, ErrInvalidToken
-		}
 		return []schedule.Lecture{}, err
+	}
+	if response.StatusCode == 403 {
+		return nil, ErrInvalidToken
 	}
 
 	body, err := io.ReadAll(response.Body)
@@ -172,15 +172,15 @@ func (a *API) requestAll() ([]schedule.Lecture, error) {
 		return []schedule.Lecture{}, err
 	}
 
-	resp, err := a.Client.Do(request)
+	response, err := a.Client.Do(request)
 	if err != nil {
-		if resp.StatusCode == 403 {
-			return nil, ErrInvalidToken
-		}
 		return []schedule.Lecture{}, err
 	}
+	if response.StatusCode == 403 {
+		return nil, ErrInvalidToken
+	}
 
-	body, err := io.ReadAll(resp.Body)
+	body, err := io.ReadAll(response.Body)
 	if err != nil {
 		return []schedule.Lecture{}, err
 	}
