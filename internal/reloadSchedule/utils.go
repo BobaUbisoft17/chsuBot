@@ -21,7 +21,7 @@ func collectLecture(sched []schedule.Lecture) (map[int]map[int][]schedule.Lectur
 				scheds[group.ID] = make(map[int][]schedule.Lecture)
 			}
 			if _, ok := scheds[group.ID][timestamp]; !ok {
-				scheds[group.ID][timestamp] = []schedule.Lecture{}
+				scheds[group.ID][timestamp] = nil
 			}
 			scheds[group.ID][timestamp] = append(scheds[group.ID][timestamp], lesson)
 		}
@@ -38,7 +38,7 @@ func splitSchedule(schedules map[int][]schedule.Lecture) ([]schedule.Lecture, []
 	today := time.Unix(int64(datesInTimestamp[0]), 0)
 	durationFromToNow := time.Since(today)
 	if durationFromToNow < time.Hour*24 && durationFromToNow >= 0 {
-		return schedules[datesInTimestamp[0]], []schedule.Lecture{}
+		return schedules[datesInTimestamp[0]], nil
 	}
-	return []schedule.Lecture{}, schedules[datesInTimestamp[0]]
+	return nil, schedules[datesInTimestamp[0]]
 }

@@ -72,7 +72,7 @@ func (a *API) GroupsId() ([]GroupIds, error) {
 func (a *API) requestGroupsId() ([]GroupIds, error) {
 	request, err := http.NewRequest(http.MethodGet, URL+"group/v1", nil)
 	if err != nil {
-		return []GroupIds{}, err
+		return nil, err
 	}
 
 	request.Header.Add("Authorization", fmt.Sprintf("Bearer %s", a.Token))
@@ -81,19 +81,19 @@ func (a *API) requestGroupsId() ([]GroupIds, error) {
 		if response.StatusCode == 403 {
 			return nil, ErrInvalidToken
 		}
-		return []GroupIds{}, err
+		return nil, err
 	}
 
 	body, err := io.ReadAll(response.Body)
 	if err != nil {
-		return []GroupIds{}, err
+		return nil, err
 	}
 	ids, err := readJson[[]GroupIds](body)
 	if err != nil {
 		if strings.Contains(err.Error(), "invalid character") {
 			return nil, ErrInvalidToken
 		}
-		return []GroupIds{}, err
+		return nil, err
 	}
 
 	return ids, nil
@@ -122,13 +122,13 @@ func (a *API) requestOne(startDate, endDate string, groupId int) ([]schedule.Lec
 	)
 	request, err := http.NewRequest(http.MethodGet, URL+requestBody, nil)
 	if err != nil {
-		return []schedule.Lecture{}, err
+		return nil, err
 	}
 
 	request.Header.Add("Authorization", fmt.Sprintf("Bearer %s", a.Token))
 	response, err := a.Client.Do(request)
 	if err != nil {
-		return []schedule.Lecture{}, err
+		return nil, err
 	}
 	if response.StatusCode == 403 {
 		return nil, ErrInvalidToken
@@ -136,14 +136,14 @@ func (a *API) requestOne(startDate, endDate string, groupId int) ([]schedule.Lec
 
 	body, err := io.ReadAll(response.Body)
 	if err != nil {
-		return []schedule.Lecture{}, err
+		return nil, err
 	}
 	lessons, err := readJson[[]schedule.Lecture](body)
 	if err != nil {
 		if strings.Contains(err.Error(), "invalid character") {
 			return nil, ErrInvalidToken
 		}
-		return []schedule.Lecture{}, err
+		return nil, err
 	}
 	return lessons, nil
 }
@@ -169,12 +169,12 @@ func (a *API) requestAll() ([]schedule.Lecture, error) {
 	request, err := http.NewRequest(http.MethodGet, URL+requestBody, nil)
 	request.Header.Add("Authorization", fmt.Sprintf("Bearer %s", a.Token))
 	if err != nil {
-		return []schedule.Lecture{}, err
+		return nil, err
 	}
 
 	response, err := a.Client.Do(request)
 	if err != nil {
-		return []schedule.Lecture{}, err
+		return nil, err
 	}
 	if response.StatusCode == 403 {
 		return nil, ErrInvalidToken
@@ -182,14 +182,14 @@ func (a *API) requestAll() ([]schedule.Lecture, error) {
 
 	body, err := io.ReadAll(response.Body)
 	if err != nil {
-		return []schedule.Lecture{}, err
+		return nil, err
 	}
 	sliceLectures, err := readJson[[]schedule.Lecture](body)
 	if err != nil {
 		if strings.Contains(err.Error(), "invalid character") {
 			return nil, ErrInvalidToken
 		}
-		return []schedule.Lecture{}, err
+		return nil, err
 	}
 	return sliceLectures, nil
 }
