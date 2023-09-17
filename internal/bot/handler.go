@@ -348,7 +348,10 @@ func (b *bot) getSettings() {
 		return
 	}
 	if !inDB {
-		b.usePackages.usersDb.AddUser(b.chatID)
+		if err = b.usePackages.usersDb.AddUser(b.chatID); err != nil {
+			b.botError(err)
+			return
+		}
 	}
 	hasGroup, err := b.usePackages.usersDb.IsUserHasGroup(b.chatID)
 	if err != nil {
@@ -380,7 +383,10 @@ func (b *bot) rememberGroup() {
 }
 
 func (b *bot) addUserGroup() {
-	b.usePackages.usersDb.ChangeUserGroup(b.chatID, b.group)
+	if err := b.usePackages.usersDb.ChangeUserGroup(b.chatID, b.group); err != nil {
+		b.botError(err)
+		return
+	}
 	b.state = b.HandleMessage
 	b.group = 0
 	b.answer(
@@ -413,7 +419,10 @@ func (b *bot) updateUserGroup() {
 		return
 	}
 	if userGroup != b.group {
-		b.usePackages.usersDb.ChangeUserGroup(b.chatID, b.group)
+		if err := b.usePackages.usersDb.ChangeUserGroup(b.chatID, b.group); err != nil {
+			b.botError(err)
+			return
+		}
 		b.group = 0
 		b.answer(
 			"Вы успешно изменили группу",
@@ -434,7 +443,10 @@ func (b *bot) deleteGroupInfo() {
 		return
 	}
 	if hasGroup {
-		b.usePackages.usersDb.DeleteGroup(b.chatID)
+		if err = b.usePackages.usersDb.DeleteGroup(b.chatID); err != nil {
+			b.botError(err)
+			return
+		}
 		replyMarkup := kb.GreetingKeyboard()
 		b.answer("Данные о вашей группе успешно удалены", replyMarkup)
 	} else {

@@ -45,7 +45,9 @@ func main() {
 		panic(err)
 	}
 
-	groupDb.AddGroups(groupIDs)
+	if err = groupDb.AddGroups(groupIDs); err != nil {
+		panic(err)
+	}
 
 	rel := reload.NewReloader(
 		api,

@@ -20,11 +20,15 @@ func (b *bot) botError(err error) {
 		"На серевере неполадки, попробуйте повторить запрос позже",
 		nil,
 	)
-	b.SendMessage(
+	_, err = b.SendMessage(
 		fmt.Errorf("Произошла ошибка: %w", err).Error(),
 		int64(b.usePackages.adminId),
 		nil,
 	)
+	if err != nil {
+		b.botError(err)
+		return
+	}
 }
 
 func (b *bot) answer(answer string, keyboard echotron.ReplyMarkup) {
@@ -35,7 +39,10 @@ func (b *bot) answer(answer string, keyboard echotron.ReplyMarkup) {
 	_, err := b.SendMessage(answer, b.chatID, messageOptions)
 	if err != nil {
 		if err.Error() == "API error: 403 Forbidden: bot was blocked by the user" {
-			b.usePackages.usersDb.DeleteUser(int64(b.chatID))
+			if err = b.usePackages.usersDb.DeleteUser(int64(b.chatID)); err != nil {
+				b.botError(err)
+				return
+			}
 		} else {
 			b.usePackages.logger.Errorf("%v", err)
 		}
@@ -82,7 +89,10 @@ func (b *bot) sendTextPost() {
 			_, err := b.SendMessage(text, int64(userID), nil)
 			if err != nil {
 				if err.Error() == "API error: 403 Forbidden: bot was blocked by the user" {
-					b.usePackages.usersDb.DeleteUser(int64(userID))
+					if err = b.usePackages.usersDb.DeleteUser(int64(userID)); err != nil {
+						b.botError(err)
+						return
+					}
 				} else {
 					b.usePackages.logger.Errorf("%v", err)
 				}
@@ -112,7 +122,10 @@ func (b *bot) sendPostWithImage(postPhoto echotron.InputFile) {
 			defer wg.Done()
 			_, err := b.SendPhoto(photo, int64(userID), &photoOpts)
 			if err.Error() == "API error: 403 Forbidden: bot was blocked by the user" {
-				b.usePackages.usersDb.DeleteUser(int64(userID))
+				if err = b.usePackages.usersDb.DeleteUser(int64(userID)); err != nil {
+					b.botError(err)
+					return
+				}
 			} else {
 				b.usePackages.logger.Errorf("%v", err)
 			}

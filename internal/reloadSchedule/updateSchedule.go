@@ -52,7 +52,10 @@ func (r *Reloader) ReloadSchedule(waitingTimeSeconds int) {
 			defer wg.Done()
 			today, tomorrow := splitSchedule(schedules)
 
-			r.groupDb.UpdateSchedule(today, tomorrow, id)
+			if err := r.groupDb.UpdateSchedule(today, tomorrow, id); err != nil {
+				r.logger.Errorf("%v", err)
+				return
+			}
 		}(key, sortedScheduleByIDs[key])
 	}
 	wg.Wait()
@@ -71,7 +74,9 @@ func (r *Reloader) addScheduleMissingGroups(keys []int) {
 		wg.Add(1)
 		go func(id int) {
 			defer wg.Done()
-			r.groupDb.UpdateSchedule([]schedule.Lecture{}, []schedule.Lecture{}, id)
+			if err := r.groupDb.UpdateSchedule([]schedule.Lecture{}, []schedule.Lecture{}, id); err != nil {
+				r.logger.Errorf("%v", err)
+			}
 		}(id)
 	}
 	wg.Wait()
