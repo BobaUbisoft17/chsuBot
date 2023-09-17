@@ -25,9 +25,14 @@ services:
             DATABASEURL: ${DATABASEURL}
             WEBHOOKURL: ${WEBHOOKURL}
             TZ: Europe/Moscow
+            LOGPATH: /var/lib/chsuBotGo/data/logs/
             TYPESTART: 
         depends_on:
             - db
+        volumes:
+            - bot-logs:/var/lib/chsuBotGo/data
 volumes:
     postgres-db-data:
         name: postgres-db-data
+    bot-logs:
+        name: bot-logs
