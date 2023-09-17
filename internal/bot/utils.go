@@ -35,6 +35,8 @@ func (b *bot) answer(answer string, keyboard echotron.ReplyMarkup) {
 	var messageOptions *echotron.MessageOptions
 	if keyboard != nil {
 		messageOptions = getReplyMarkupMessageOptions(keyboard)
+	} else {
+		messageOptions = &echotron.MessageOptions{ParseMode: "Markdown"}
 	}
 	_, err := b.SendMessage(answer, b.chatID, messageOptions)
 	if err != nil {
