@@ -1,6 +1,7 @@
 package bot
 
 import (
+	"fmt"
 	"sort"
 	"strconv"
 	"strings"
@@ -13,6 +14,18 @@ import (
 	"github.com/BobaUbisoft17/chsuBot/pkg"
 	"github.com/NicoNex/echotron/v3"
 )
+
+func (b *bot) botError(err error) {
+	b.answer(
+		"На серевере неполадки, попробуйте повторить запрос позже",
+		nil,
+	)
+	b.SendMessage(
+		fmt.Errorf("Произошла ошибка: %w", err).Error(),
+		int64(b.usePackages.adminId),
+		nil,
+	)
+}
 
 func (b *bot) answer(answer string, keyboard echotron.ReplyMarkup) {
 	var messageOptions *echotron.MessageOptions
@@ -56,7 +69,12 @@ func getReplyMarkupMessageOptions(replyMarkup echotron.ReplyMarkup) *echotron.Me
 
 func (b *bot) sendTextPost() {
 	var wg sync.WaitGroup
-	userIDs := b.usePackages.usersDb.GetUsersId()
+	userIDs, err := b.usePackages.usersDb.GetUsersId()
+	if err != nil {
+		b.answer("Произшла ошибка", nil)
+		b.usePackages.logger.Errorf("%v", err)
+		return
+	}
 	for _, userID := range userIDs {
 		wg.Add(1)
 		go func(userID int, text string) {
@@ -79,7 +97,12 @@ func (b *bot) sendTextPost() {
 
 func (b *bot) sendPostWithImage(postPhoto echotron.InputFile) {
 	var wg sync.WaitGroup
-	userIDs := b.usePackages.usersDb.GetUsersId()
+	userIDs, err := b.usePackages.usersDb.GetUsersId()
+	if err != nil {
+		b.answer("Произшла ошибка", nil)
+		b.usePackages.logger.Errorf("%v", err)
+		return
+	}
 	photoOpts := echotron.PhotoOptions{
 		Caption: b.postText,
 	}

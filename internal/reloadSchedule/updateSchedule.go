@@ -14,8 +14,8 @@ type chsuAPI interface {
 }
 
 type groupStorage interface {
-	UpdateSchedule(todaySchedule, tomorrowSchedule []schedule.Lecture, groupID int)
-	UnusedID(ID []int) []int
+	UpdateSchedule(todaySchedule, tomorrowSchedule []schedule.Lecture, groupID int) error
+	UnusedID(ID []int) ([]int, error)
 }
 
 type Reloader struct {
@@ -44,6 +44,7 @@ func (r *Reloader) ReloadSchedule(waitingTimeSeconds int) {
 	sortedScheduleByIDs, err := collectLecture(unSortedSchedule)
 	if err != nil {
 		r.logger.Errorf("%v", err)
+		return
 	}
 	for key := range sortedScheduleByIDs {
 		wg.Add(1)
@@ -61,7 +62,12 @@ func (r *Reloader) ReloadSchedule(waitingTimeSeconds int) {
 
 func (r *Reloader) addScheduleMissingGroups(keys []int) {
 	var wg sync.WaitGroup
-	for _, id := range r.groupDb.UnusedID(keys) {
+	ids, err := r.groupDb.UnusedID(keys)
+	if err != nil {
+		r.logger.Errorf("%v", err)
+		return
+	}
+	for _, id := range ids {
 		wg.Add(1)
 		go func(id int) {
 			defer wg.Done()

@@ -14,23 +14,22 @@ type api interface {
 }
 
 type groupStorage interface {
-	GetGroupNames() []string
-	GetTodaySchedule(groupID int) string
-	GetTomorrowSchedule(groupID int) string
-	GroupId(string) int
-	GroupNameIsCorrect(groupName string) bool
-	GroupsStartsWith(firstSymbol string) []database.GroupInfo
+	GetGroupNames() ([]string, error)
+	GetTodaySchedule(groupID int) (string, error)
+	GetTomorrowSchedule(groupID int) (string, error)
+	GroupNameIsCorrect(groupName string) (bool, error)
+	GroupsStartsWith(firstSymbol string) ([]database.GroupInfo, error)
 }
 
 type userStorage interface {
-	AddUser(userID int64)
-	ChangeUserGroup(userID int64, groupID int)
-	DeleteGroup(userID int64)
-	DeleteUser(userID int64)
-	GetUserGroup(userID int64) int
-	GetUsersId() []int
-	IsUserHasGroup(userID int64) bool
-	IsUserInDB(userID int64) bool
+	AddUser(userID int64) error
+	ChangeUserGroup(userID int64, groupID int) error
+	DeleteGroup(userID int64) error
+	DeleteUser(userID int64) error
+	GetUserGroup(userID int64) (int, error)
+	GetUsersId() ([]int, error)
+	IsUserHasGroup(userID int64) (bool, error)
+	IsUserInDB(userID int64) (bool, error)
 }
 
 type stateFn func(*echotron.Update) stateFn

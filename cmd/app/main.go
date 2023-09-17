@@ -22,12 +22,15 @@ func main() {
 
 	userDb := database.NewUserStorage(
 		cfg.DatabaseURL,
-		groupDb,
 		logger,
 	)
 
-	groupDb.Start()
-	userDb.Start()
+	if err := groupDb.Start(); err != nil {
+		panic(err)
+	}
+	if err := userDb.Start(); err != nil {
+		panic(err)
+	}
 
 	api := chsuAPI.New(
 		map[string]string{
