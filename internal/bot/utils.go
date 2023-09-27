@@ -20,8 +20,9 @@ func (b *bot) botError(err error) {
 		"На серевере неполадки, попробуйте повторить запрос позже",
 		nil,
 	)
+	b.usePackages.logger.Trace(err)
 	_, err = b.SendMessage(
-		fmt.Errorf("Произошла ошибка: %w", err).Error(),
+		fmt.Sprintf("Произошла ошибка: %s", err.Error()),
 		int64(b.usePackages.adminId),
 		nil,
 	)
@@ -80,8 +81,7 @@ func (b *bot) sendTextPost() {
 	var wg sync.WaitGroup
 	userIDs, err := b.usePackages.usersDb.GetUsersId()
 	if err != nil {
-		b.answer("Произшла ошибка", nil)
-		b.usePackages.logger.Errorf("%v", err)
+		b.botError(err)
 		return
 	}
 	for _, userID := range userIDs {
@@ -111,8 +111,7 @@ func (b *bot) sendPostWithImage(postPhoto echotron.InputFile) {
 	var wg sync.WaitGroup
 	userIDs, err := b.usePackages.usersDb.GetUsersId()
 	if err != nil {
-		b.answer("Произшла ошибка", nil)
-		b.usePackages.logger.Errorf("%v", err)
+		b.botError(err)
 		return
 	}
 	photoOpts := echotron.PhotoOptions{

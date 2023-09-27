@@ -96,6 +96,8 @@ func (u *usePackages) StartBot() {
 		u.logger.Info(dsp.ListenWebhook(u.webhook))
 	} else {
 		u.logger.Info("Start on long polling")
-		u.logger.Info(dsp.PollOptions(false, echotron.UpdateOptions{Timeout: 120}))
+		for {
+			u.logger.Info(dsp.PollOptions(false, echotron.UpdateOptions{Timeout: 120}))
+		}
 	}
 }
