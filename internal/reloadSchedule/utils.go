@@ -35,9 +35,9 @@ func splitSchedule(schedules map[int][]schedule.Lecture) ([]schedule.Lecture, []
 		sort.Ints(datesInTimestamp)
 		return schedules[datesInTimestamp[0]], schedules[datesInTimestamp[1]]
 	}
-	today := time.Unix(int64(datesInTimestamp[0]), 0)
+	today := time.Unix(int64(datesInTimestamp[0]), 0).Add(-3 * time.Hour)
 	durationFromToNow := time.Since(today)
-	if durationFromToNow < time.Hour*24 && durationFromToNow >= 0 {
+	if durationFromToNow < time.Hour*24 {
 		return schedules[datesInTimestamp[0]], nil
 	}
 	return nil, schedules[datesInTimestamp[0]]
