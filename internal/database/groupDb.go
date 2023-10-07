@@ -11,7 +11,7 @@ import (
 )
 
 type GroupStorage struct {
-	DbUrl  string
+	db     *sql.DB
 	logger *logging.Logger
 }
 
@@ -20,22 +20,16 @@ type GroupInfo struct {
 	GroupID   int
 }
 
-func NewGroupStorage(url string, logger *logging.Logger) *GroupStorage {
+func NewGroupStorage(url *sql.DB, logger *logging.Logger) *GroupStorage {
 	return &GroupStorage{
-		DbUrl:  url,
+		db:     url,
 		logger: logger,
 	}
 
 }
 
 func (s *GroupStorage) Start() error {
-	db, err := sql.Open("pgx", s.DbUrl)
-	if err != nil {
-		s.logger.Error(err)
-		return err
-	}
-	defer db.Close()
-	_, err = db.Exec("CREATE TABLE IF NOT EXISTS groups (groupName TEXT, groupID BIGINT, todaySchedule TEXT, tomorrowSchedule TEXT)")
+	_, err := s.db.Exec("CREATE TABLE IF NOT EXISTS groups (groupName TEXT, groupID BIGINT, todaySchedule TEXT, tomorrowSchedule TEXT)")
 	if err != nil {
 		s.logger.Error(err)
 		return err
@@ -44,18 +38,12 @@ func (s *GroupStorage) Start() error {
 }
 
 func (s *GroupStorage) AddGroups(groupIds []chsuAPI.GroupIds) error {
-	db, err := sql.Open("pgx", s.DbUrl)
+	_, err := s.db.Exec("DELETE FROM groups")
 	if err != nil {
 		s.logger.Error(err)
 		return err
 	}
-	defer db.Close()
-	_, err = db.Exec("DELETE FROM groups")
-	if err != nil {
-		s.logger.Error(err)
-		return err
-	}
-	statement, err := db.Prepare("INSERT INTO groups (groupName, groupID) VALUES ($1, $2)")
+	statement, err := s.db.Prepare("INSERT INTO groups (groupName, groupID) VALUES ($1, $2)")
 	if err != nil {
 		s.logger.Error(err)
 		return err
@@ -71,13 +59,7 @@ func (s *GroupStorage) AddGroups(groupIds []chsuAPI.GroupIds) error {
 }
 
 func (s *GroupStorage) GetGroupIds() ([]int, error) {
-	db, err := sql.Open("pgx", s.DbUrl)
-	if err != nil {
-		s.logger.Error(err)
-		return nil, err
-	}
-	defer db.Close()
-	rows, err := db.Query("SELECT groupID FROM groups")
+	rows, err := s.db.Query("SELECT groupID FROM groups")
 	if err != nil {
 		s.logger.Error(err)
 		return nil, err
@@ -96,14 +78,9 @@ func (s *GroupStorage) GetGroupIds() ([]int, error) {
 }
 
 func (s *GroupStorage) GroupNameIsCorrect(groupName string) (bool, error) {
-	db, err := sql.Open("pgx", s.DbUrl)
-	if err != nil {
-		s.logger.Error(err)
-	}
-	defer db.Close()
-	row := db.QueryRow("SELECT EXISTS (SELECT groupID FROM groups WHERE groupName=$1 AND groupID IS NOT NULL)", groupName)
+	row := s.db.QueryRow("SELECT EXISTS (SELECT groupID FROM groups WHERE groupName=$1 AND groupID IS NOT NULL)", groupName)
 	var ans bool
-	if err = row.Scan(&ans); err != nil {
+	if err := row.Scan(&ans); err != nil {
 		s.logger.Error(err)
 		return false, err
 	}
@@ -111,13 +88,7 @@ func (s *GroupStorage) GroupNameIsCorrect(groupName string) (bool, error) {
 }
 
 func (s *GroupStorage) GetGroupNames() ([]string, error) {
-	db, err := sql.Open("pgx", s.DbUrl)
-	if err != nil {
-		s.logger.Error(err)
-		return nil, err
-	}
-	defer db.Close()
-	rows, err := db.Query("SELECT groupName FROM groups")
+	rows, err := s.db.Query("SELECT groupName FROM groups")
 	if err != nil {
 		s.logger.Error(err)
 		return nil, err
@@ -136,13 +107,7 @@ func (s *GroupStorage) GetGroupNames() ([]string, error) {
 }
 
 func (s *GroupStorage) UpdateSchedule(todaySchedule, tomorrowSchedule []schedule.Lecture, groupID int) error {
-	db, err := sql.Open("pgx", s.DbUrl)
-	if err != nil {
-		s.logger.Error(err)
-		return err
-	}
-	defer db.Close()
-	_, err = db.Exec(
+	_, err := s.db.Exec(
 		"UPDATE groups SET todaySchedule=$1, tomorrowSchedule=$2 WHERE groupID=$3",
 		schedule.New(todaySchedule).Render(),
 		schedule.New(tomorrowSchedule).Render(),
@@ -157,13 +122,7 @@ func (s *GroupStorage) UpdateSchedule(todaySchedule, tomorrowSchedule []schedule
 
 func (s *GroupStorage) UnusedID(ids []int) ([]int, error) {
 	unusedKeys := []int{}
-	db, err := sql.Open("pgx", s.DbUrl)
-	if err != nil {
-		s.logger.Error(err)
-		return nil, err
-	}
-	defer db.Close()
-	rows, err := db.Query("SELECT groupID FROM groups")
+	rows, err := s.db.Query("SELECT groupID FROM groups")
 	if err != nil {
 		s.logger.Error(err)
 		return nil, err
@@ -184,16 +143,9 @@ func (s *GroupStorage) UnusedID(ids []int) ([]int, error) {
 }
 
 func (s *GroupStorage) GetTodaySchedule(groupID int) (string, error) {
-	db, err := sql.Open("pgx", s.DbUrl)
-	if err != nil {
-		s.logger.Error(err)
-		return "", err
-	}
-	defer db.Close()
-
-	row := db.QueryRow("SELECT todaySchedule FROM groups WHERE groupID=$1", groupID)
+	row := s.db.QueryRow("SELECT todaySchedule FROM groups WHERE groupID=$1", groupID)
 	var ans string
-	if err = row.Scan(&ans); err != nil {
+	if err := row.Scan(&ans); err != nil {
 		s.logger.Error(err)
 		return "", err
 	}
@@ -201,16 +153,9 @@ func (s *GroupStorage) GetTodaySchedule(groupID int) (string, error) {
 }
 
 func (s *GroupStorage) GetTomorrowSchedule(groupID int) (string, error) {
-	db, err := sql.Open("pgx", s.DbUrl)
-	if err != nil {
-		s.logger.Error(err)
-		return "", err
-	}
-	defer db.Close()
-
-	row := db.QueryRow("SELECT tomorrowSchedule FROM groups WHERE groupID=$1", groupID)
+	row := s.db.QueryRow("SELECT tomorrowSchedule FROM groups WHERE groupID=$1", groupID)
 	var ans string
-	if err = row.Scan(&ans); err != nil {
+	if err := row.Scan(&ans); err != nil {
 		s.logger.Error(err)
 		return "", err
 	}
@@ -219,14 +164,7 @@ func (s *GroupStorage) GetTomorrowSchedule(groupID int) (string, error) {
 
 func (s *GroupStorage) GroupsStartsWith(firstSymbol string) ([]GroupInfo, error) {
 	var groups []GroupInfo
-	db, err := sql.Open("pgx", s.DbUrl)
-	if err != nil {
-		s.logger.Error(err)
-		return nil, err
-	}
-	defer db.Close()
-
-	rows, err := db.Query("SELECT groupName, groupID FROM groups WHERE groupName LIKE $1||'%' ORDER BY groupName", firstSymbol)
+	rows, err := s.db.Query("SELECT groupName, groupID FROM groups WHERE groupName LIKE $1||'%' ORDER BY groupName", firstSymbol)
 	if err != nil {
 		s.logger.Errorf("%v", err)
 		return nil, err

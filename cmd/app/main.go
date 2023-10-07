@@ -1,6 +1,7 @@
 package main
 
 import (
+	"database/sql"
 	"sync"
 
 	"github.com/BobaUbisoft17/chsuBot/internal/bot"
@@ -15,13 +16,19 @@ func main() {
 	cfg := config.GetConfig()
 	logger := logging.New()
 
+	db, err := sql.Open("pgx", cfg.DatabaseURL)
+	if err != nil {
+		panic(err)
+	}
+	defer db.Close()
+
 	groupDb := database.NewGroupStorage(
-		cfg.DatabaseURL,
+		db,
 		logger,
 	)
 
 	userDb := database.NewUserStorage(
-		cfg.DatabaseURL,
+		db,
 		logger,
 	)
 
