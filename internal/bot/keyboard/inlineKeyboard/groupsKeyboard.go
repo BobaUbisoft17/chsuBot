@@ -52,31 +52,32 @@ func getGroupButtons(groups []database.GroupInfo) [][]echotron.InlineKeyboardBut
 	return keyboard
 }
 
-func CreateGroupKeyboard(groups []database.GroupInfo, university string, part int) echotron.InlineKeyboardMarkup {
-	var keyboard [][]echotron.InlineKeyboardButton
-	if len(groups) < 18 {
-		keyboard = getGroupButtons(groups)
-		keyboard = append(keyboard, addButton("Назад", "back"))
-	} else if part == 1 {
-		keyboard = getGroupButtons(groups[:18])
-		keyboard = append(keyboard, []echotron.InlineKeyboardButton{
-			addButton("Назад", "back")[0],
-			addButton(">", fmt.Sprintf("next %s 2", university))[0],
-		})
-	} else if part*18 >= len(groups) {
-		keyboard = getGroupButtons(groups[(part-1)*18:])
-		keyboard = append(keyboard, []echotron.InlineKeyboardButton{
-			addButton("<", fmt.Sprintf("previous %s %d", university, part-1))[0],
-			addButton("Назад", "back")[0],
-		})
-	} else {
-		keyboard = getGroupButtons(groups[(part-1)*18 : part*18])
-		keyboard = append(keyboard, []echotron.InlineKeyboardButton{
-			addButton("<", fmt.Sprintf("previous %s %d", university, part-1))[0],
-			addButton("Назад", "back")[0],
-			addButton(">", fmt.Sprintf("next %s %d", university, part+1))[0],
-		})
+func getNavButtons(university string, amountGroups, part int) []echotron.InlineKeyboardButton {
+	back := addButton("Назад", "back")[0]
+	previous := addButton("<", fmt.Sprintf("previous %s %d", university, part-1))[0]
+	next := addButton(">", fmt.Sprintf("next %s 2", university))[0]
+	if amountGroups < 18 {
+		return []echotron.InlineKeyboardButton{back}
 	}
+	if part == 1 {
+		return []echotron.InlineKeyboardButton{back, next}
+	}
+	if part*18 >= amountGroups {
+		return []echotron.InlineKeyboardButton{previous, back}
+	}
+	return []echotron.InlineKeyboardButton{previous, back, next}
+}
+
+func CreateGroupKeyboard(groups []database.GroupInfo, university string, part int) echotron.InlineKeyboardMarkup {
+	var end int
+	start := 18 * (part - 1)
+	if 18*part <= len(groups) {
+		end = 18 * part
+	} else {
+		end = len(groups)
+	}
+	keyboard := getGroupButtons(groups[start:end])
+	keyboard = append(keyboard, getNavButtons(university, len(groups), part))
 	return echotron.InlineKeyboardMarkup{
 		InlineKeyboard: keyboard,
 	}
