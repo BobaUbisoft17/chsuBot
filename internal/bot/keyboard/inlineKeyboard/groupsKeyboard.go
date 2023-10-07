@@ -55,7 +55,7 @@ func getGroupButtons(groups []database.GroupInfo) [][]echotron.InlineKeyboardBut
 func getNavButtons(university string, amountGroups, part int) []echotron.InlineKeyboardButton {
 	back := addButton("Назад", "back")[0]
 	previous := addButton("<", fmt.Sprintf("previous %s %d", university, part-1))[0]
-	next := addButton(">", fmt.Sprintf("next %s 2", university))[0]
+	next := addButton(">", fmt.Sprintf("next %s %d", university, part+1))[0]
 	if amountGroups < 18 {
 		return []echotron.InlineKeyboardButton{back}
 	}
