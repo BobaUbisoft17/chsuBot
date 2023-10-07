@@ -2,7 +2,6 @@ package database
 
 import (
 	"database/sql"
-	"slices"
 
 	chsuAPI "github.com/BobaUbisoft17/chsuBot/internal/chsuAPI"
 	"github.com/BobaUbisoft17/chsuBot/internal/schedule"
@@ -122,6 +121,10 @@ func (s *GroupStorage) UpdateSchedule(todaySchedule, tomorrowSchedule []schedule
 
 func (s *GroupStorage) UnusedID(ids []int) ([]int, error) {
 	unusedKeys := []int{}
+	usedKeys := make(map[int]bool, len(ids))
+	for _, id := range ids {
+		usedKeys[id] = true
+	}
 	rows, err := s.db.Query("SELECT groupID FROM groups")
 	if err != nil {
 		s.logger.Error(err)
@@ -135,7 +138,7 @@ func (s *GroupStorage) UnusedID(ids []int) ([]int, error) {
 			s.logger.Errorf("%v", err)
 			return nil, err
 		}
-		if !slices.Contains(ids, id) {
+		if _, ok := usedKeys[id]; !ok {
 			unusedKeys = append(unusedKeys, id)
 		}
 	}
