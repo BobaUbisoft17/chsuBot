@@ -188,11 +188,26 @@ func buildSchedule(schedules []schedule.Lecture) ([]string, error) {
 		daySchedule := schedule.New(sortedSchedule[key]).Render()
 		if len(message+daySchedule) < 4096 {
 			message += daySchedule
+		} else if len(daySchedule) >= 4096 {
+			doubleBreaks := findDoubleLineBreaks(daySchedule)
+			half := doubleBreaks[len(doubleBreaks)/2]
+			messages = append(messages, daySchedule[:half])
+			message = daySchedule[half:]
 		} else {
 			messages, message = append(messages, message), daySchedule
 		}
 	}
 	return append(messages, message), nil
+}
+
+func findDoubleLineBreaks(line string) []int {
+	breaks := []int{}
+	for i := 1; i < len(line); i++ {
+		if line[i-1:i+1] == "\n\n" && line[i-2:i-1] != "*" {
+			breaks = append(breaks, i)
+		}
+	}
+	return breaks
 }
 
 func (b *bot) changeMonth(callback *echotron.CallbackQuery) {
