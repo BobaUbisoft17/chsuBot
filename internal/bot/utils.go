@@ -191,6 +191,9 @@ func buildSchedule(schedules []schedule.Lecture) ([]string, error) {
 		} else if len(daySchedule) >= 4096 {
 			doubleBreaks := findDoubleLineBreaks(daySchedule)
 			half := doubleBreaks[len(doubleBreaks)/2]
+			if len(message) != 0 {
+				messages = append(messages, message)
+			}
 			messages = append(messages, daySchedule[:half])
 			message = daySchedule[half:]
 		} else {
