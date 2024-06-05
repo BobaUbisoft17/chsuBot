@@ -17,6 +17,7 @@ import (
 const URL = "http://api.chsu.ru/api/"
 
 var ErrInvalidToken = errors.New("Invalid token")
+var ErrManyRedirects = errors.New("More 10 redirects, need to get auth token")
 
 func New(data map[string]string, logger *logging.Logger) *API {
 	return &API{
@@ -33,7 +34,7 @@ func (a *API) updateToken() error {
 	}
 
 	resp, err := http.Post(
-		URL+"/auth/signin",
+		URL+"auth/signin",
 		"application/json",
 		bytes.NewBuffer(bytesData),
 	)
@@ -58,7 +59,7 @@ func (a *API) updateToken() error {
 func (a *API) GroupsId() ([]GroupIds, error) {
 	for {
 		groupIds, err := a.requestGroupsId()
-		if errors.Is(err, ErrInvalidToken) {
+		if errors.Is(err, ErrInvalidToken) || errors.Is(err, ErrManyRedirects) {
 			if err = a.updateToken(); err != nil {
 				return nil, err
 			} else {
@@ -78,10 +79,14 @@ func (a *API) requestGroupsId() ([]GroupIds, error) {
 	request.Header.Add("Authorization", fmt.Sprintf("Bearer %s", a.Token))
 	response, err := a.Client.Do(request)
 	if err != nil {
-		if response.StatusCode == 403 {
+		switch response.StatusCode {
+		case 403:
 			return nil, ErrInvalidToken
+		case 302:
+			return nil, ErrManyRedirects
+		default:
+			return nil, err
 		}
-		return nil, err
 	}
 
 	body, err := io.ReadAll(response.Body)
@@ -115,7 +120,7 @@ func (a *API) One(startDate, endDate string, groupId int) ([]schedule.Lecture, e
 
 func (a *API) requestOne(startDate, endDate string, groupId int) ([]schedule.Lecture, error) {
 	requestBody := fmt.Sprintf(
-		"timetable/v1/from/%v/to/%v/groupId/%v/",
+		"timetable/v1/from/%v/to/%v/groupId/%v",
 		startDate,
 		endDate,
 		groupId,
@@ -165,7 +170,7 @@ func (a *API) All() ([]schedule.Lecture, error) {
 func (a *API) requestAll() ([]schedule.Lecture, error) {
 	from := time.Now().Format("02.01.2006")
 	to := time.Now().Add(24 * time.Hour).Format("02.01.2006")
-	requestBody := fmt.Sprintf("timetable/v1/event/from/%s/to/%s/", from, to)
+	requestBody := fmt.Sprintf("timetable/v1/event/from/%s/to/%s", from, to)
 	request, err := http.NewRequest(http.MethodGet, URL+requestBody, nil)
 	request.Header.Add("Authorization", fmt.Sprintf("Bearer %s", a.Token))
 	if err != nil {
