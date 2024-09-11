@@ -22,3 +22,6 @@ go.work
 
 # vscode settings directory
 .vscode
+
+# env files
+*.env
