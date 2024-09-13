@@ -4,7 +4,6 @@ import (
 	"database/sql"
 
 	chsuAPI "github.com/BobaUbisoft17/chsuBot/internal/chsuAPI"
-	"github.com/BobaUbisoft17/chsuBot/internal/schedule"
 	"github.com/BobaUbisoft17/chsuBot/pkg/logging"
 	_ "github.com/jackc/pgx/v5/stdlib"
 )
@@ -105,16 +104,20 @@ func (s *GroupStorage) GetGroupNames() ([]string, error) {
 	return groupNames, nil
 }
 
-func (s *GroupStorage) UpdateSchedule(todaySchedule, tomorrowSchedule []schedule.Lecture, groupID int) error {
-	_, err := s.db.Exec(
-		"UPDATE groups SET todaySchedule=$1, tomorrowSchedule=$2 WHERE groupID=$3",
-		schedule.New(todaySchedule).Render(),
-		schedule.New(tomorrowSchedule).Render(),
-		groupID,
-	)
+func (s *GroupStorage) UpdateSchedule(schedule map[int][2]string) error {
+	statement, err := s.db.Prepare("UPDATE groups SET todaySchedule=$1, tomorrowSchedule=$2 WHERE groupID=$3")
 	if err != nil {
-		s.logger.Error(err)
+		s.logger.Errorf("%v", err)
 		return err
+	}
+
+	for groupId := range schedule {
+		todaySchedule, tomorrowSchedule := schedule[groupId]
+		_, err = statement.Exec(todaySchedule, tomorrowSchedule, groupId)
+		if err != nil {
+			s.logger.Errorf("%v", err)
+			return err
+		}
 	}
 	return nil
 }
